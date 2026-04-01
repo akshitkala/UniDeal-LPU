@@ -12,12 +12,8 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <h2 className="text-2xl font-bold text-[#2D9A54]">UniDeal</h2>
             <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
-              Your exclusive campus marketplace. Buy and sell second-hand goods safely within the LPU community.
+              Campus marketplace — buy and sell, simply.
             </p>
-            <div className="flex items-center gap-2 text-gray-400 mt-2">
-              <MapPin className="w-4 h-4 text-[#2D9A54]" />
-              <span className="text-sm">Lovely Professional University</span>
-            </div>
           </div>
 
           {/* Column 2: Quick Links */}
@@ -33,7 +29,6 @@ export function Footer() {
           <div className="flex flex-col gap-3">
             <h3 className="font-semibold text-lg mb-2">Trust & Safety</h3>
             <Link href="/safety" className="text-gray-400 hover:text-white transition-colors text-sm">Safety Guidelines</Link>
-            <Link href="/verification" className="text-gray-400 hover:text-white transition-colors text-sm">Student Verification</Link>
             <Link href="/report" className="text-gray-400 hover:text-white transition-colors text-sm">Report a Listing</Link>
             <div className="flex items-center gap-2 text-gray-400 mt-2">
               <span className="text-xs px-2 py-1 bg-gray-800 rounded font-medium text-gray-300 border border-gray-700">AI Moderated</span>
@@ -60,7 +55,7 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 gap-4">
           <p>© {new Date().getFullYear()} UniDeal Marketplace. All rights reserved.</p>
           <p className="flex items-center gap-1">
-            Built with ♥ for <span className="font-semibold text-gray-400">LPU Students</span>
+            Connect with the <span className="font-semibold text-gray-400">Campus Community</span>
           </p>
         </div>
       </div>

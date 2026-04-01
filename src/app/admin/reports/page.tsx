@@ -13,9 +13,20 @@ import {
   Loader2,
   ChevronRight,
   MoreVertical,
-  Calendar
+  Calendar,
+  ShieldAlert,
+  BrainCircuit,
+  Zap,
+  Clock,
+  CheckCircle2,
+  AlertOctagon,
+  Eye,
+  Trash2,
+  Archive,
+  ShieldCheck
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { cn } from '@/lib/utils'
 
 interface Report {
   _id: string
@@ -35,10 +46,6 @@ interface Report {
   createdAt: string
 }
 
-/**
- * A-03: Admin Reports Review (Fix 15).
- * Features: status tabs, quick resolution, and detailed context view.
- */
 export default function AdminReportsPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [activeTab, setActiveTab] = useState<'pending' | 'reviewed' | 'dismissed'>('pending')
@@ -68,7 +75,7 @@ export default function AdminReportsPage() {
       const res = await fetch(`/api/admin/reports/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, note: `Handled via dashboard` })
+        body: JSON.stringify({ action, note: `Handled via tactical dashboard` })
       })
       if (res.ok) {
         setReports(prev => prev.filter(r => r._id !== id))
@@ -81,121 +88,144 @@ export default function AdminReportsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-             <Flag className="w-8 h-8 text-amber-500" />
-             Reports Queue
-          </h1>
-          <p className="text-gray-500 mt-1">Review student reports and listing violations.</p>
+    <div className="max-w-[1440px] mx-auto flex flex-col gap-12 px-6 md:px-12 mb-20 overflow-hidden">
+      
+      {/* Neural Header */}
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 py-8 shrink-0">
+        <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 px-3 py-1 bg-rose-50 text-rose-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-rose-100 w-fit">
+                <AlertOctagon className="w-3.5 h-3.5" /> Integrity Violation Vector
+            </div>
+            <h1 className="text-5xl font-black text-gray-900 tracking-tighter leading-none">Intelligence Queue</h1>
+            <p className="text-gray-500 font-medium text-lg">
+                Neutralize reports, resolve conflicts, and maintain campus marketplace standards.
+            </p>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-gray-200">
-        {(['pending', 'reviewed', 'dismissed'] as const).map(tab => (
-          <button 
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 capitalize ${
-              activeTab === tab 
-                ? 'border-[#2D9A54] text-[#2D9A54]' 
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+        <div className="flex items-center gap-2 p-1.5 bg-gray-100/50 backdrop-blur-md border border-gray-200 rounded-[2rem]">
+            {[
+                { id: 'pending', label: 'Active Alerts', icon: ShieldAlert, color: 'text-rose-600' },
+                { id: 'reviewed', label: 'Case Studies', icon: CheckCircle2, color: 'text-emerald-600' },
+                { id: 'dismissed', label: 'Archived Signal', icon: Archive, color: 'text-gray-600' }
+            ].map(tab => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as 'pending' | 'reviewed' | 'dismissed')}
+                  className={cn(
+                    "px-8 py-3 rounded-[1.5rem] font-black text-xs transition-all flex items-center gap-2",
+                    activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
+                  )}
+                >
+                    <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? tab.color : "text-gray-300")} />
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+      </header>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2D9A54]" />
+        <div className="flex flex-col items-center justify-center py-40 gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-rose-600" />
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Synchronizing Violation Data</p>
         </div>
       ) : reports.length === 0 ? (
-        <div className="text-center py-32 bg-white rounded-3xl border border-dashed border-gray-200 flex flex-col items-center">
-           <CheckCircle className="w-12 h-12 text-gray-200 mb-4" />
-           <p className="text-gray-400 font-medium">Clear Queue: No {activeTab} reports found.</p>
+        <div className="flex flex-col items-center justify-center py-40 px-10 text-center bg-white border border-gray-100 rounded-[4rem] shadow-premium">
+           <div className="w-24 h-24 bg-emerald-50 rounded-[3rem] flex items-center justify-center mb-8 border border-emerald-100">
+                <CheckCircle2 className="w-12 h-12 text-emerald-500" />
+           </div>
+           <h3 className="text-3xl font-black text-gray-900 tracking-tighter uppercase mb-4">Registry Secure</h3>
+           <p className="text-gray-500 font-medium max-w-sm">No {activeTab} violations detected in this sector. Integrity levels at 100%.</p>
         </div>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {reports.map(report => (
-            <div key={report._id} className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col lg:flex-row gap-6 relative overflow-hidden group">
-               {/* Marker */}
-               <div className={`absolute top-0 left-0 bottom-0 w-1 ${
-                  report.reason === 'inappropriate' || report.reason === 'fake_listing' ? 'bg-red-500' : 'bg-amber-400'
-               }`} />
+            <div key={report._id} className="group relative bg-white border border-gray-100 rounded-[3.5rem] p-4 shadow-sm hover:shadow-premium transition-all duration-500 hover:-translate-y-2 overflow-hidden">
+               
+               {/* Risk Indicator */}
+               <div className={cn(
+                   "absolute top-0 left-0 bottom-0 w-2",
+                   report.reason === 'inappropriate' || report.reason === 'fake_listing' ? 'bg-rose-500' : 'bg-amber-400'
+               )} />
 
-               {/* Target Listing Card Component Concept */}
-               <div className="flex-shrink-0 w-full lg:w-72">
-                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 border border-gray-50 mb-3">
-                    <Image 
-                       src={report.listing?.images?.[0] || '/placeholder.png'} 
-                       fill 
-                       alt="listing preview" 
-                       className="object-cover"
-                    />
+               <div className="flex flex-col md:flex-row gap-8">
+                  {/* Asset Preview */}
+                  <div className="relative w-full md:w-56 h-56 shrink-0 rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-xl-soft">
+                        <Image 
+                        src={report.listing?.images?.[0] || '/placeholder.png'} 
+                        fill 
+                        alt="listing preview" 
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors pointer-events-none" />
+                        <Link 
+                            href={`/listing/${report.listing?.slug}`} 
+                            target="_blank"
+                            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        >
+                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-2xl">
+                                <ExternalLink className="w-5 h-5 text-gray-900" />
+                            </div>
+                        </Link>
                   </div>
-                  <h3 className="font-bold text-gray-900 line-clamp-1">{report.listing?.title}</h3>
-                  <Link 
-                    href={`/listing/${report.listing?.slug}`} 
-                    target="_blank"
-                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 font-bold mt-1 hover:underline"
-                  >
-                    View Global Post <ExternalLink className="w-3 h-3" />
-                  </Link>
-               </div>
 
-               {/* Report Detail */}
-               <div className="flex-1 space-y-4">
-                  <div className="flex flex-wrap gap-4 items-center justify-between">
-                     <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 bg-gray-900 text-white text-[10px] uppercase font-black tracking-widest rounded-full">
-                           {report.reason.replace('_', ' ')}
-                        </span>
-                        <div className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
-                           <Calendar className="w-3 h-3" />
-                           {formatDistanceToNow(new Date(report.createdAt))} ago
+                  {/* Intelligence Report */}
+                  <div className="flex-1 flex flex-col gap-6 py-4 pr-4">
+                     <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                            <span className={cn(
+                                "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                                report.reason === 'inappropriate' || report.reason === 'fake_listing' ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-amber-50 border-amber-200 text-amber-700'
+                            )}>
+                                {report.reason.replace('_', ' ')}
+                            </span>
+                            <div className="text-[10px] text-gray-300 font-bold flex items-center gap-2">
+                                <Clock className="w-3 h-3" /> {formatDistanceToNow(new Date(report.createdAt))}
+                            </div>
+                        </div>
+                        <h3 className="text-2xl font-black text-gray-900 tracking-tighter uppercase line-clamp-1 truncate group-hover:text-rose-600 transition-colors">
+                            {report.listing?.title}
+                        </h3>
+                     </div>
+
+                     <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gray-50 rounded-2xl flex items-center justify-center border border-gray-100 shrink-0">
+                                <User className="w-5 h-5 text-gray-300" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Reporter</span>
+                                <span className="text-xs font-black text-gray-900">{report.reportedBy.displayName}</span>
+                            </div>
                         </div>
                      </div>
-                     <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                           <User className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <div className="flex flex-col">
-                           <span className="text-gray-900 font-bold">{report.reportedBy.displayName}</span>
-                           <span className="text-[10px]">{report.reportedBy.email}</span>
-                        </div>
+
+                     <div className="p-6 bg-gray-50/50 rounded-[2rem] border border-gray-100 relative group-hover:bg-white transition-colors duration-500">
+                        <p className="text-sm text-gray-600 leading-relaxed font-medium italic">
+                           "{report.description || 'No binary context provided by agent.'}"
+                        </p>
                      </div>
-                  </div>
 
-                  <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                     <p className="text-sm text-gray-700 leading-relaxed italic">
-                        "{report.description || 'No additional description provided by reporter.'}"
-                     </p>
+                     {/* Tactical Actions */}
+                     {activeTab === 'pending' && (
+                        <div className="flex items-center gap-4 mt-2">
+                            <button 
+                                onClick={() => handleAction(report._id, 'resolve')}
+                                disabled={!!actionLoading}
+                                className="flex-1 h-16 bg-gray-900 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all hover:bg-emerald-600 active:scale-95 shadow-xl-soft"
+                            >
+                                {actionLoading === report._id ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
+                                Commit Resolve
+                            </button>
+                            <button 
+                                onClick={() => handleAction(report._id, 'dismiss')}
+                                disabled={!!actionLoading}
+                                className="h-16 px-10 border border-gray-100 hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all text-gray-400"
+                            >
+                                {actionLoading === report._id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+                            </button>
+                        </div>
+                     )}
                   </div>
-               </div>
-
-               {/* Quick Actions */}
-               <div className="lg:w-48 flex lg:flex-col justify-end gap-2 p-1 pt-4 lg:pt-1 border-t lg:border-t-0 lg:border-l border-gray-100">
-                  <button 
-                    onClick={() => handleAction(report._id, 'resolve')}
-                    disabled={activeTab !== 'pending' || !!actionLoading}
-                    className="flex-1 lg:flex-none flex items-center justify-center gap-2 h-11 bg-[#2D9A54] text-white rounded-xl text-sm font-bold hover:bg-[#258246] transition-all disabled:opacity-50"
-                  >
-                    {actionLoading === report._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                    Resolve
-                  </button>
-                  <button 
-                    onClick={() => handleAction(report._id, 'dismiss')}
-                    disabled={activeTab !== 'pending' || !!actionLoading}
-                    className="flex-1 lg:flex-none flex items-center justify-center gap-2 h-11 border border-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-all disabled:opacity-50"
-                  >
-                    {actionLoading === report._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XSquare className="w-4 h-4" />}
-                    Dismiss
-                  </button>
                </div>
 
             </div>

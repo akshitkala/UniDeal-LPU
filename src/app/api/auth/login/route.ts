@@ -89,8 +89,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Issue both tokens
-    const accessToken = signAccessToken(jwtPayload)
-    const refreshToken = signRefreshToken(jwtPayload)
+    const accessToken = await signAccessToken(jwtPayload)
+    const refreshToken = await signRefreshToken(jwtPayload)
 
     // Set HTTP-only cookies (SameSite=Strict, Secure in prod)
     await setAccessTokenCookie(accessToken)
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         metadata: { email, uid },
         timestamp: new Date(),
       })
-      await sendWelcomeEmail(user.email, user.displayName || 'Student')
+      await sendWelcomeEmail(user.email, user.displayName || 'User')
     }
 
     // CRITICAL: Never include whatsappNumber — response only has safe fields

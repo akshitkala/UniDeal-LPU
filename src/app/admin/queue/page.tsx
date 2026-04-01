@@ -2,9 +2,31 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { CheckCircle, XCircle, Trash2, ShieldAlert, Loader2, ArrowUpRight, Search } from 'lucide-react'
+import { 
+  CheckCircle, 
+  X, 
+  Trash2, 
+  ShieldAlert, 
+  Loader2, 
+  ArrowUpRight, 
+  Search, 
+  BrainCircuit, 
+  UserCheck, 
+  ShieldCheck, 
+  History, 
+  AlertTriangle,
+  XCircle,
+  Eye,
+  MoreVertical,
+  ExternalLink,
+  Ban,
+  Clock,
+  BadgeAlert,
+  ChevronRight,
+  Mail
+} from 'lucide-react'
 import { ConfirmModal } from '@/components/admin/ConfirmModal'
-import { Banner } from '@/components/global/Banner'
+import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 
 type TabState = 'pending' | 'flagged' | 'live'
@@ -35,7 +57,7 @@ export default function ModerationQueue() {
         setError(null)
       }
     } catch {
-      setError('Global Sync Error: Failed to retrieve moderation queue.')
+      setError('Neural Sync Error: Failed to retrieve moderation data.')
     } finally {
       setLoading(false)
     }
@@ -70,121 +92,188 @@ export default function ModerationQueue() {
          setError(null)
          fetchQueue(activeTab)
       } else {
-         setError(data.error || 'Directive failure')
+         setError(data.error || 'Directives rejected by server.')
       }
     } catch (e) {
-      setError('Vector Exception: Network disruption during action.')
+      setError('Communication Vector Breakdown: Action failed.')
     } finally {
       setActionLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-7xl mx-auto mb-20">
+    <div className="flex flex-col gap-10 max-w-[1440px] mx-auto mb-24 px-6 md:px-12">
       
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-extrabold text-[#1A1A1A]">Moderation Queue</h1>
-        <p className="text-gray-500 mt-1">Review new submissions, evaluate AI-flagged content, and manage marketplace integrity.</p>
-      </div>
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pt-8">
+        <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-indigo-100 w-fit">
+                <BrainCircuit className="w-3.5 h-3.5" /> Moderation Engine v3.1
+            </div>
+            <h1 className="text-5xl font-black text-gray-900 tracking-tighter leading-none">Moderation Queue</h1>
+            <p className="text-gray-500 font-medium text-lg max-w-2xl">
+                Manual oversight of campus deals. AI handles 95% of traffic; you handle the edge cases.
+            </p>
+        </div>
+
+        <div className="flex items-center gap-2 p-1.5 bg-gray-100/50 backdrop-blur-md border border-gray-200 rounded-[2rem]">
+            {[
+                { id: 'pending', label: 'Human Review', icon: Clock, color: 'text-amber-600' },
+                { id: 'flagged', label: 'AI Blocked', icon: BadgeAlert, color: 'text-rose-600' },
+                { id: 'live', label: 'Active Feed', icon: ShieldCheck, color: 'text-emerald-600' }
+            ].map(tab => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabState)}
+                  className={cn(
+                    "px-6 py-3 rounded-[1.5rem] font-black text-xs transition-all flex items-center gap-2",
+                    activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
+                  )}
+                >
+                    <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? tab.color : "text-gray-300")} />
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+      </header>
 
       {error && (
-        <Banner 
-          message={error} 
-          variant="error" 
-          onClose={() => setError(null)} 
-        />
+        <div className="p-4 bg-rose-50 border border-rose-100 rounded-3xl flex items-center gap-3 text-rose-600 text-sm font-bold animate-in slide-in-from-top-4">
+           <AlertTriangle className="w-5 h-5 shrink-0" /> {error}
+        </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#E5E5E5] w-full">
-        <button onClick={() => setActiveTab('pending')} className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'pending' ? 'border-[#2D9A54] text-[#2D9A54]' : 'border-transparent text-gray-500'}`}>
-           <div className="flex items-center gap-2">Needs Review</div>
-        </button>
-        <button onClick={() => setActiveTab('flagged')} className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'flagged' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500'}`}>
-           <div className="flex items-center gap-2"><ShieldAlert className="w-4 h-4"/> AI Flagged</div>
-        </button>
-        <button onClick={() => setActiveTab('live')} className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'live' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'}`}>
-           <div className="flex items-center gap-2">Live Directory</div>
-        </button>
-      </div>
-
-      {/* Main Table */}
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
+      {/* Main Command Center */}
+      <div className="bg-white border border-gray-100 rounded-[3rem] shadow-premium overflow-hidden min-h-[500px]">
         {loading ? (
-          <div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 text-[#2D9A54] animate-spin" /></div>
+          <div className="flex flex-col items-center justify-center h-96 gap-4">
+             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Loading Queue</p>
+          </div>
         ) : listings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-20 text-center">
-            <Search className="w-12 h-12 text-gray-300 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800">Queue Clear</h3>
-            <p className="text-gray-500 mt-2">Zero listings matching this filter. Good job.</p>
+          <div className="flex flex-col items-center justify-center p-32 text-center">
+            <div className="w-20 h-20 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center mb-8 border border-emerald-100">
+                <ShieldCheck className="w-10 h-10 text-emerald-500" />
+            </div>
+            <h3 className="text-3xl font-black text-gray-900 mb-2">Queue Clear</h3>
+            <p className="text-gray-500 font-medium max-w-sm">No listings are currently awaiting manual intervention.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-[#F9F9F9] border-b border-[#E5E5E5] text-gray-500 uppercase text-xs font-bold tracking-wider">
+              <thead className="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 <tr>
-                  <th className="p-4">Listing Details</th>
-                  <th className="p-4">Seller Info</th>
-                  <th className="p-4">Submission</th>
-                  <th className="p-4 text-right">Actions</th>
+                  <th className="px-8 py-6">Item Details</th>
+                  <th className="px-8 py-6">Seller Information</th>
+                  <th className="px-8 py-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E5E5E5]">
+              <tbody className="divide-y divide-gray-50">
                 {listings.map((list) => (
-                  <tr key={list.slug} className={`hover:bg-gray-50 transition-colors ${list.aiFlagged ? 'bg-red-50/30' : ''}`}>
+                  <tr key={list.slug} className={cn(
+                    "group transition-all duration-300",
+                    list.aiFlagged ? "bg-rose-50/20 hover:bg-rose-50/40" : "hover:bg-gray-50/50"
+                  )}>
                     
-                    <td className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-200">
-                           {list.images && list.images[0] ? <img src={list.images[0]} alt="tb" className="w-full h-full object-cover"/> : <span className="text-[10px] text-gray-400 font-bold uppercase">No Img</span>}
+                    <td className="px-8 py-8">
+                      <div className="flex items-start gap-6">
+                        <div className="relative w-32 h-32 bg-gray-50 rounded-[2rem] overflow-hidden flex-shrink-0 border-4 border-white shadow-xl">
+                           {list.images?.[0] ? (
+                             <img src={list.images[0]} alt="tb" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+                           ) : (
+                             <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
+                               <ShieldAlert className="w-8 h-8 opacity-20" />
+                             </div>
+                           )}
+                           {list.aiFlagged && (
+                             <div className="absolute inset-0 bg-rose-600/10 backdrop-blur-[1px] flex items-center justify-center">
+                                <BadgeAlert className="w-10 h-10 text-white drop-shadow-lg" />
+                             </div>
+                           )}
                         </div>
-                        <div className="flex flex-col w-[280px]">
-                           <span className="font-bold text-[#1A1A1A] truncate">{list.title}</span>
-                           <span className="text-green-600 font-bold mt-0.5">₹{list.price.toLocaleString('en-IN')}</span>
-                           <div className="flex items-center gap-2 mt-1">
-                             {list.aiFlagged && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-widest border border-red-200">Flagged</span>}
-                             <Link href={`/listing/${list.slug}`} target="_blank" className="text-xs text-blue-500 hover:underline flex items-center gap-0.5 font-medium">View Public <ArrowUpRight className="w-3 h-3"/></Link>
+                        
+                        <div className="flex flex-col gap-1 pr-8">
+                           <div className="flex items-center gap-3 mb-1">
+                               <span className="text-[18px] font-black text-gray-900 line-clamp-1">{list.title}</span>
+                               <Link href={`/listing/${list.slug}`} target="_blank" className="p-1.5 bg-gray-100 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                               </Link>
+                           </div>
+                           <p className="text-sm font-black text-emerald-600 mb-2">₹{list.price.toLocaleString('en-IN')}</p>
+                           
+                           {activeTab === 'flagged' && list.aiVerification && (
+                             <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-rose-100 shadow-sm flex flex-col gap-1.5 mt-2 max-w-md">
+                                <div className="flex items-center gap-2">
+                                    <BrainCircuit className="w-3.5 h-3.5 text-rose-500" />
+                                    <span className="text-[9px] font-black uppercase text-rose-500 tracking-widest">AI Audit Found Violations</span>
+                                </div>
+                                <p className="text-[11px] font-bold text-gray-700 leading-relaxed italic">
+                                    "{list.aiVerification.reason || 'Safety parameters exceeded baseline thresholds.'}"
+                                </p>
+                             </div>
+                           )}
+                           <div className="flex items-center gap-4 mt-3">
+                              <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter flex items-center gap-1.5">
+                                 <Clock className="w-3.5 h-3.5" /> {formatDistanceToNow(new Date(list.createdAt))} ago
+                              </span>
                            </div>
                         </div>
                       </div>
                     </td>
 
-                    <td className="p-4">
-                      <div className="flex flex-col">
-                         <span className="font-bold text-gray-800">{list.seller?.displayName || 'Unknown'}</span>
-                         <span className="text-gray-500 mt-0.5">{list.seller?.email || 'N/A'}</span>
-                         {list.seller?.isLpuVerified && <span className="text-[10px] text-[#2D9A54] font-bold uppercase tracking-wider mt-1">LPU Verified</span>}
+                    <td className="px-8 py-8">
+                      <div className="flex flex-col gap-2">
+                         <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center font-black text-gray-400 text-sm border border-white shadow-sm">
+                               {list.seller?.displayName?.charAt(0) || '?'}
+                            </div>
+                            <div className="flex flex-col">
+                               <div className="flex items-center gap-2">
+                                  <span className="font-black text-gray-900 leading-tight">{list.seller?.displayName || 'Campus User'}</span>
+                                  <a 
+                                    href={`mailto:${list.seller?.email}?subject=Regarding your UniDeal listing: ${list.title}`}
+                                    className="p-1 bg-gray-100 rounded-md text-gray-400 hover:text-[#2D9A54] hover:bg-emerald-50 transition-all"
+                                    title="Contact Seller"
+                                  >
+                                     <Mail className="w-3 h-3" />
+                                  </a>
+                               </div>
+                               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{list.seller?.email || 'unverified@email.com'}</span>
+                            </div>
+                         </div>
+                         <div className="flex flex-wrap gap-2 mt-1">
+                            {list.seller?.roles?.includes('admin') && (
+                                <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1 border border-indigo-100">
+                                   <ShieldCheck className="w-3 h-3" /> Staff
+                                </span>
+                            )}
+                         </div>
                       </div>
                     </td>
 
-                    <td className="p-4">
-                       <span className="font-medium">{formatDistanceToNow(new Date(list.createdAt))} ago</span>
-                    </td>
-
-                    <td className="p-4">
-                       <div className="flex items-center justify-end gap-2">
-                          {(list.status === 'pending' || list.aiFlagged) && (
-                            <>
-                              <button 
+                    <td className="px-8 py-8">
+                       <div className="flex items-center justify-end gap-3">
+                          {activeTab !== 'live' && (
+                             <button 
                                 onClick={() => setModalConfig({ isOpen: true, type: 'approve', slug: list.slug, title: list.title })}
-                                className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors title='Approve'"
-                              >
-                                <CheckCircle className="w-5 h-5"/>
-                              </button>
-                              <button 
-                                onClick={() => setModalConfig({ isOpen: true, type: 'reject', slug: list.slug, title: list.title })}
-                                className="p-2 text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors title='Reject'"
-                              >
-                                <XCircle className="w-5 h-5"/>
-                              </button>
-                            </>
+                                className="h-14 px-6 bg-emerald-600 text-white rounded-2xl font-black text-xs flex items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                             >
+                                <CheckCircle className="w-4 h-4"/> Approve
+                             </button>
                           )}
                           <button 
-                             onClick={() => setModalConfig({ isOpen: true, type: 'delete', slug: list.slug, title: list.title })}
-                             className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors title='Hard Delete'"
+                             onClick={() => setModalConfig({ isOpen: true, type: 'reject', slug: list.slug, title: list.title })}
+                             className="h-14 w-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center hover:bg-amber-100 active:scale-95 transition-all"
+                             title="Reject (Return to Seller)"
                           >
-                            <Trash2 className="w-5 h-5"/>
+                             <Ban className="w-5 h-5"/>
+                          </button>
+                          <button 
+                             onClick={() => setModalConfig({ isOpen: true, type: 'delete', slug: list.slug, title: list.title })}
+                             className="h-14 w-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center hover:bg-rose-100 active:scale-95 transition-all"
+                             title="Destroy Listing"
+                          >
+                             <Trash2 className="w-5 h-5"/>
                           </button>
                        </div>
                     </td>
@@ -196,37 +285,44 @@ export default function ModerationQueue() {
         )}
       </div>
 
-      {/* Dynamic Action Modal */}
+      {/* Dynamic Action Matrix */}
       {modalConfig.isOpen && (
         <ConfirmModal 
           title={
-            modalConfig.type === 'approve' ? 'Approve Listing?' :
-            modalConfig.type === 'reject' ? 'Reject Submission?' :
-            'Execute Hard Delete?'
+            modalConfig.type === 'approve' ? 'Neural Authorization' :
+            modalConfig.type === 'reject' ? 'Rejection Protocol' :
+            'Destruction Sequence'
           }
           description={
-            <div className="flex flex-col gap-4 text-left">
-               <p className="text-gray-600">
-                 You are about to {modalConfig.type} <strong>{modalConfig.title}</strong>. 
-                 {modalConfig.type === 'delete' && ' This will irreversibly purge the asset from MongoDB and physically destroy images in Cloudinary.'}
-               </p>
+            <div className="flex flex-col gap-6 py-4">
+               <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                   <p className="text-gray-600 text-sm font-medium">
+                     Target Object: <strong className="text-gray-900">{modalConfig.title}</strong>
+                   </p>
+               </div>
                
-               {/* Custom Reason Injection for Destructive Paths */}
                {(modalConfig.type === 'reject' || modalConfig.type === 'delete') && (
-                 <label className="flex flex-col gap-1.5 mt-2">
-                   <span className="text-sm font-bold text-gray-800">Mandatory Reason</span>
-                   <input 
-                     type="text"
-                     value={reasonInput}
-                     onChange={(e) => setReasonInput(e.target.value)}
-                     className="w-full h-11 px-3 border border-gray-300 focus:border-red-500 rounded-lg outline-none bg-gray-50"
-                     placeholder="e.g. Scraped images, scam URL included"
-                   />
-                 </label>
+                 <div className="flex flex-col gap-3">
+                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest pl-1">Reason (Buyer Notification)</label>
+                    <textarea 
+                      value={reasonInput}
+                      onChange={(e) => setReasonInput(e.target.value)}
+                      className="w-full h-32 p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-rose-500/10 focus:border-rose-300 font-bold text-gray-900 transition-all resize-none text-sm"
+                      placeholder="Explain why this listing is being suppressed..."
+                    />
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-rose-500">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Buyer will see this reason in their dashboard logs.
+                    </div>
+                 </div>
                )}
             </div>
           }
-          actionText={`Confirm ${modalConfig.type.toUpperCase()}`}
+          actionText={
+            modalConfig.type === 'approve' ? 'Authorize Publication' :
+            modalConfig.type === 'reject' ? 'Confirm Rejection' :
+            'Execute Destruction'
+          }
           actionVariant={modalConfig.type === 'approve' ? 'primary' : 'danger'}
           requireText={modalConfig.type === 'delete' ? 'DELETE' : undefined}
           loading={actionLoading}

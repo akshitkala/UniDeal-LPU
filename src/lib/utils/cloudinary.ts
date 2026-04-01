@@ -17,7 +17,6 @@ export async function uploadImageBuffer(buffer: Buffer): Promise<string> {
         // FIXED: Fix 13 requirements
         quality: 'auto',
         fetch_format: 'auto',
-        moderation: 'aws_rek', // Rekognition check
       },
       (error, result) => {
         if (error) {

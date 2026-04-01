@@ -145,7 +145,7 @@ export const POST = withAuth(async (req, user) => {
 
     // 3. IMAGE SECURITY: Magic Bytes & Cloudinary (Fix 13/14)
     const imageFiles = formData.getAll('images') as File[]
-    if (imageFiles.length > 3) return NextResponse.json({ error: 'Max 3 images' }, { status: 400 })
+    if (imageFiles.length > 2) return NextResponse.json({ error: 'Max 2 images limit enforced' }, { status: 400 })
 
     const uploadedUrls: string[] = []
     for (const file of imageFiles) {
@@ -162,44 +162,64 @@ export const POST = withAuth(async (req, user) => {
         uploadedUrls.push(url)
       } catch (err) {
         console.error('Upload Error:', err)
-        return NextResponse.json({ error: 'Storage failed' }, { status: 500 })
+        return NextResponse.json({ error: 'Storage failure during asset ingestion' }, { status: 500 })
       }
     }
 
-    // 4. DB Write
+    // 4. WhatsApp Sync: Save to profile if missing
+    if (parsedData.data.whatsappNumber && !dbUser.whatsappNumber) {
+        dbUser.whatsappNumber = parsedData.data.whatsappNumber
+        await dbUser.save()
+    }
+
+    // 5. DB Write
     const baseSlug = parsedData.data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
     const finalSlug = `${baseSlug}-${nanoid(6)}`
 
+    const now = new Date()
     const newListing = new Listing({
       ...parsedData.data,
       images: uploadedUrls,
       seller: dbUser._id,
       slug: finalSlug,
       status: 'pending',
+      bumpedAt: now,
+      expiresAt: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000)
     })
 
     // Update User Listing Counts
     await User.findByIdAndUpdate(dbUser._id, { $inc: { totalListings: 1, activeListings: 1 } })
 
-    // 5. Synchronous AI Trigger
-    const aiCheck = await checkListingAI(
+    // Save first — never blocks the response
+    await newListing.save()
+
+    // 6. Fire-and-forget AI Check (Fix 7)
+    checkListingAI(
       parsedData.data.title,
       parsedData.data.description,
       parsedData.data.price,
       validCategory.name
-    )
+    ).then(async (aiCheck) => {
+      // Update flags & auto-approve if clean
+      const updateData: any = {
+        aiFlagged: aiCheck.aiFlagged,
+        aiUnavailable: aiCheck.aiUnavailable,
+      }
+      if (!aiCheck.aiFlagged && !aiCheck.aiUnavailable) {
+        updateData.status = 'approved'
+        // Flush cache for this category
+        await redis.del(`feed:browse:1:12:${validCategory._id || 'all'}:newest:none`)
+      }
+      await Listing.findByIdAndUpdate(newListing._id, updateData)
+    }).catch(async (err) => {
+      console.error('[AI Post-Save Error]', err)
+      await Listing.findByIdAndUpdate(newListing._id, {
+        aiFlagged: true,
+        aiUnavailable: true
+      })
+    })
 
-    newListing.aiFlagged = aiCheck.aiFlagged
-    newListing.aiUnavailable = aiCheck.aiUnavailable
-    if (!aiCheck.aiFlagged && !aiCheck.aiUnavailable) {
-      newListing.status = 'approved'
-      // Flush first page cache for this category
-      await redis.del(`feed:browse:1:12:${validCategory.id || 'all'}:newest:none`)
-    }
-
-    await newListing.save()
-
-    return NextResponse.json({ slug: finalSlug, flagged: aiCheck.aiFlagged }, { status: 201 })
+    return NextResponse.json({ slug: finalSlug }, { status: 201 })
   } catch (error) {
     console.error('[/api/listings POST error]', error)
     return NextResponse.json({ error: 'Creation failed' }, { status: 500 })

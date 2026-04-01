@@ -2,10 +2,24 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { formatDistanceToNow } from 'date-fns'
-import { PlusCircle, Search, Edit3, Trash2, ArrowUpCircle, CheckCircle, AlertTriangle, XCircle, Loader2 } from 'lucide-react'
-import { Banner } from '@/components/global/Banner'
+import { formatDistanceToNow, addDays, isAfter } from 'date-fns'
+import { 
+  PlusCircle, 
+  Trash2, 
+  ArrowUpCircle, 
+  CheckCircle, 
+  AlertTriangle, 
+  Loader2,
+  Clock,
+  ExternalLink,
+  ShieldAlert,
+  ChevronRight,
+  TrendingUp,
+  Inbox
+} from 'lucide-react'
 import { ConfirmModal } from '@/components/admin/ConfirmModal'
+import { cn } from '@/lib/utils'
+import { ListingCard } from '@/components/listing/ListingCard'
 
 type TabState = 'active' | 'pending' | 'blocked'
 
@@ -50,14 +64,14 @@ export default function Dashboard() {
       const res = await fetch(`/api/listings/${slug}/bump`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Bump Protocol Failure: Rate limit exceeded or internal error.')
+        setError(data.error || 'Rate limit exceeded.')
       } else {
-        setSuccess('Listing successfully prioritized in the global live feed.')
+        setSuccess('Listing prioritized in the feed.')
         setError(null)
         fetchListings(activeTab)
       }
     } catch (error) {
-      setError('Vector Disruption: Network anomaly during priority bump.')
+      setError('Network error during bump.')
     } finally {
       setActionLoading(null)
     }
@@ -71,190 +85,181 @@ export default function Dashboard() {
       if (res.ok) {
         setDeleteModalOpen(false)
         setListingToDelete(null)
-        setSuccess('Payload evacuated. Listing document has been soft-deleted.')
+        setSuccess('Listing deleted.')
         setError(null)
         fetchListings(activeTab)
       } else {
         const data = await res.json()
-        setError(data.error || 'Vector Deletion Failure: Persistence error during evacuation.')
+        setError(data.error || 'Failed to delete listing.')
       }
     } catch (error) {
-      setError('Communication Interruption: Network error during deletion sequence.')
+      setError('Network error during deletion.')
     } finally {
       setActionLoading(null)
     }
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-5xl mx-auto mt-6 mb-20">
+    <div className="flex flex-col gap-10 max-w-[1280px] mx-auto mt-8 mb-24 px-4">
       
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-[#1A1A1A]">Seller Dashboard</h1>
-          <p className="text-gray-500 mt-1">Manage your active campus deals, check pending AI verifications, and bump old listings.</p>
+      {/* Header Strategy */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="flex flex-col gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 mb-2 w-fit">
+                <TrendingUp className="w-3 h-3" /> Marketplace
+            </div>
+            <h1 className="text-5xl font-black text-gray-900 tracking-tighter leading-none mb-1">My Dashboard</h1>
+            <p className="text-gray-500 font-medium text-lg">Manage your campus listings and interactions.</p>
         </div>
+
         <Link 
           href="/post" 
-          className="bg-[#2D9A54] hover:bg-[#258246] text-white px-6 py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 whitespace-nowrap shadow-md w-fit"
+          className="h-16 px-10 bg-[#2D9A54] hover:bg-[#258246] text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-[#2D9A54]/20"
         >
-          <PlusCircle className="w-5 h-5" /> Post New Deal
+          <PlusCircle className="w-6 h-6" /> Sell Another Item
         </Link>
-      </div>
+      </header>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#E5E5E5] w-full mt-2">
-        <button 
-          onClick={() => setActiveTab('active')}
-          className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'active' ? 'border-[#2D9A54] text-[#2D9A54]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
-        >
-          <div className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> Active</div>
-        </button>
-        <button 
-          onClick={() => setActiveTab('pending')}
-          className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'pending' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
-        >
-          <div className="flex items-center gap-2"><Loader2 className="w-4 h-4"/> Pending</div>
-        </button>
-        <button 
-          onClick={() => setActiveTab('blocked')}
-          className={`px-6 py-3 font-semibold text-sm transition-colors border-b-2 ${activeTab === 'blocked' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
-        >
-          <div className="flex items-center gap-2"><AlertTriangle className="w-4 h-4"/> Action Required</div>
-        </button>
+      {/* Persistence Tabs */}
+      <div className="flex items-center gap-1 p-1.5 bg-gray-50 border border-gray-100 rounded-2xl w-fit">
+        {[
+          { id: 'active', label: 'Live', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-[#2D9A54]' },
+          { id: 'pending', label: 'Review', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-500' },
+          { id: 'blocked', label: 'Blocked', icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-500' }
+        ].map((tab) => (
+            <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabState)}
+                className={cn(
+                    "relative px-6 py-3 rounded-xl font-black text-sm transition-all flex items-center gap-2",
+                    activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
+                )}
+            >
+                <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? tab.color : "text-gray-300")} />
+                {tab.label}
+                {activeTab === tab.id && <span className={cn("absolute -top-1 -right-1 w-2 h-2 rounded-full", tab.bg)} />}
+            </button>
+        ))}
       </div>
 
       {error && (
-        <Banner 
-          message={error} 
-          variant="error" 
-          onClose={() => setError(null)} 
-        />
+        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 text-sm font-bold animate-in slide-in-from-top-4 duration-300">
+           <AlertTriangle className="w-5 h-5 shrink-0" /> {error}
+        </div>
       )}
 
       {success && (
-        <Banner 
-          message={success} 
-          variant="success" 
-          onClose={() => setSuccess(null)} 
-        />
+        <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3 text-emerald-600 text-sm font-bold animate-in slide-in-from-top-4 duration-300">
+           <CheckCircle className="w-5 h-5 shrink-0" /> {success}
+        </div>
       )}
 
-      {/* Content Area */}
-      <div className="flex flex-col gap-4">
+      {/* Grid Architecture */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         {loading ? (
-          <div className="flex flex-col gap-4 animate-pulse">
-            <div className="w-full h-32 bg-gray-100 rounded-xl"></div>
-            <div className="w-full h-32 bg-gray-100 rounded-xl"></div>
-          </div>
+          <>
+            {[1,2,3,4].map(i => (
+                <div key={i} className="h-80 bg-gray-50 rounded-[2.5rem] border border-gray-100 animate-pulse" />
+            ))}
+          </>
         ) : listings.length === 0 ? (
-          <div className="text-center py-20 bg-[#F9F9F9] border border-[#E5E5E5] rounded-xl flex flex-col items-center">
-            <Search className="w-12 h-12 text-gray-300 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800">No {activeTab} listings found</h3>
-            <p className="text-gray-500 mt-2 mb-6 max-w-sm">You dont have any items in this category currently.</p>
+          <div className="col-span-full p-20 bg-gray-50/50 border border-dashed border-gray-200 rounded-[3rem] flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-sm mb-6">
+                <Inbox className="w-8 h-8 text-gray-200" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-2">No listings found</h3>
+            <p className="text-gray-500 font-medium mb-8 max-w-xs">You have no {activeTab} listings at the moment.</p>
             {activeTab === 'active' && (
-              <Link href="/post" className="text-[#2D9A54] font-bold hover:underline">Start selling now →</Link>
+              <Link href="/post" className="font-black text-[#2D9A54] hover:gap-3 transition-all flex items-center gap-2 group">
+                 Post your first item <ChevronRight className="w-4 h-4 group-hover:translate-x-1" />
+              </Link>
             )}
           </div>
         ) : (
-          listings.map((list) => (
-            <div key={list.slug} className="flex flex-col sm:flex-row bg-white border border-[#E5E5E5] rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-              
-              {/* Image Box */}
-              <div className="w-full sm:w-48 h-40 sm:h-auto bg-gray-100 flex-shrink-0 flex justify-center items-center border-b sm:border-b-0 sm:border-r border-gray-200">
-                 {list.images && list.images.length > 0 ? (
-                    <img src={list.images[0]} className="w-full h-full object-cover" alt="item" />
-                 ) : (
-                    <span className="text-gray-400 text-xs font-medium">No Image</span>
-                 )}
-              </div>
+          listings.map((item) => {
+            const canBump = item.bumpCount < 3 && item.status === 'approved' && !item.aiFlagged
+            const nextBumpDate = item.lastBumpAt ? addDays(new Date(item.lastBumpAt), 7) : null
+            const isOnCooldown = !!(nextBumpDate && isAfter(nextBumpDate, new Date()))
 
-              {/* Data Box */}
-              <div className="p-5 flex flex-col flex-1 justify-between gap-4">
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-xl font-bold text-[#1A1A1A] line-clamp-1">
-                      <Link href={`/listing/${list.slug}`} className="hover:underline">{list.title}</Link>
-                    </h3>
-                    <div className="text-lg font-bold text-[#2D9A54] mt-1">₹{list.price.toLocaleString('en-IN')}</div>
-                    
-                    <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                      <span>Posted {formatDistanceToNow(new Date(list.createdAt))} ago</span>
-                      <span>{list.bumpCount} / 3 Bumps Used</span>
+            return (
+              <ListingCard 
+                key={item.slug} 
+                listing={item} 
+                showSeller={false}
+                actions={
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                        <span className={cn(
+                            "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter border",
+                            item.status === 'approved' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                            item.status === 'pending' ? "bg-amber-50 text-amber-700 border-amber-100" :
+                            "bg-rose-50 text-rose-700 border-rose-100"
+                        )}>
+                            {item.status === 'approved' ? 'Live' : item.status === 'pending' ? 'Review' : 'Blocked'}
+                        </span>
+                        <span className="text-[9px] font-bold text-gray-400 flex items-center gap-1 uppercase tracking-widest leading-none">
+                            <Clock className="w-3 h-3" />
+                            {formatDistanceToNow(new Date(item.createdAt))}
+                        </span>
                     </div>
-                  </div>
-                  
-                  {/* Status Badge */}
-                  <div className="flex-shrink-0">
-                    {list.aiFlagged ? (
-                      <span className="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" /> Flagged
-                      </span>
-                    ) : list.status === 'approved' ? (
-                      <span className="bg-green-50 text-[#2D9A54] border border-green-200 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" /> Live
-                      </span>
-                    ) : list.status === 'pending' ? (
-                      <span className="bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-                        <Loader2 className="w-3 h-3 animate-spin" /> In Review
-                      </span>
-                    ) : (
-                      <span className="bg-gray-100 text-gray-600 border border-gray-200 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                        {list.status}
-                      </span>
-                    )}
-                  </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                  {list.status === 'approved' && !list.aiFlagged && (
-                     <button 
-                       onClick={() => handleBump(list.slug)}
-                       disabled={actionLoading === `bump-${list.slug}` || list.bumpCount >= 3}
-                       title={list.bumpCount >= 3 ? "Max bumps reached" : "Push to top of feed"}
-                       className="flex items-center gap-1.5 text-sm font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                     >
-                       {actionLoading === `bump-${list.slug}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpCircle className="w-4 h-4" />}
-                       Bump
-                     </button>
-                  )}
-                  {/* <Link 
-                    href={`/edit/${list.slug}`}
-                    className="flex items-center gap-1.5 text-sm font-semibold bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 px-4 py-2 rounded-lg transition-colors"
-                  >
-                    <Edit3 className="w-4 h-4" /> Edit
-                  </Link> */}
-                  <button 
-                    onClick={() => {
-                       setListingToDelete(list.slug)
-                       setDeleteModalOpen(true)
-                    }}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors ml-auto md:ml-0"
-                  >
-                    <Trash2 className="w-4 h-4" /> Delete
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          ))
+                    <div className="grid grid-cols-2 gap-2">
+                        {item.status === 'approved' && (
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleBump(item.slug)
+                                }}
+                                disabled={!!actionLoading || !canBump || isOnCooldown}
+                                className={cn(
+                                    "h-9 rounded-lg font-black text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50",
+                                    isOnCooldown || item.bumpCount >= 3 ? "bg-gray-100 text-gray-400" : "bg-emerald-600 text-white shadow-md shadow-emerald-500/10"
+                                )}
+                            >
+                                {actionLoading === `bump-${item.slug}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowUpCircle className="w-3.5 h-3.5" />}
+                                {isOnCooldown ? 'Cooldown' : 'Bump'}
+                            </button>
+                        )}
+                        <Link 
+                            href={`/listing/${item.slug}`} 
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-9 px-3 bg-gray-50 text-gray-700 rounded-lg font-black text-[10px] flex items-center justify-center gap-2 hover:bg-gray-100"
+                        >
+                            <ExternalLink className="w-3.5 h-3.5" /> View
+                        </Link>
+                    </div>
+                    
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setListingToDelete(item.slug)
+                            setDeleteModalOpen(true)
+                        }}
+                        className="w-full h-9 text-rose-500 hover:bg-rose-50 rounded-lg font-black text-[10px] transition-colors border border-transparent hover:border-rose-100"
+                    >
+                        <Trash2 className="w-3.5 h-3.5 mx-auto" />
+                    </button>
+                  </div>
+                }
+              />
+            )
+          })
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Overlay */}
       {deleteModalOpen && (
         <ConfirmModal 
           title="Evacuate Listing?"
-          description="Are you sure you want to retire this listing? It will immediately be suppressed from global feeds. This action is irreversible for standard users."
-          actionText="Confirm Deletion"
+          description="Confirm immediate extraction of this listing from all campus feeds. This action is final for users."
+          actionText="Confirm Extraction"
           actionVariant="danger"
           onConfirm={handleDeleteExecute}
           onCancel={() => {
             setDeleteModalOpen(false)
             setListingToDelete(null)
           }}
-          loading={actionLoading?.startsWith('delete')}
+          loading={!!actionLoading?.startsWith('delete')}
         />
       )}
 

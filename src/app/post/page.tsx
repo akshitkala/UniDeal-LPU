@@ -1,19 +1,35 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { compressImage } from '@/lib/utils/compressImage'
-import { validators } from '@/lib/utils/validate'
-import { ImagePlus, X, AlertCircle, Loader2 } from 'lucide-react'
+import { validators, listingSchema } from '@/lib/utils/validate'
+import { 
+  ImagePlus, 
+  X, 
+  AlertCircle, 
+  Loader2, 
+  ArrowRight, 
+  ArrowLeft, 
+  CheckCircle2,
+  ShieldCheck,
+  Tag,
+  MessageCircle,
+  Clock,
+  Camera
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export default function PostListing() {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
+  const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [images, setImages] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [categories, setCategories] = useState<any[]>([])
   
   const [formData, setFormData] = useState({
     title: '',
@@ -25,44 +41,38 @@ export default function PostListing() {
     whatsappNumber: '',
   })
 
-  // Basic categories (mock array for MVP, ideally fetched from DB)
-  const categories = [
-    { name: 'Electronics', slug: 'electronics' },
-    { name: 'Books & Notes', slug: 'books-notes' },
-    { name: 'Vehicles', slug: 'vehicles' },
-    { name: 'Fashion', slug: 'fashion' },
-    { name: 'Hobbies & Sports', slug: 'hobbies-sports' },
-    { name: 'Dorm Setup', slug: 'dorm-setup' }
-  ]
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/categories')
+        if (res.ok) {
+          const data = await res.json()
+          setCategories(data)
+        }
+      } catch (err) {
+        console.error('Category Sync Failed:', err)
+      }
+    }
+    fetchCategories()
+  }, [])
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
-    
-    // Convert FileList to Array and cap at 2 maximum overall
     const files = Array.from(e.target.files)
     const combinedFiles = [...images, ...files].slice(0, 2)
     
     try {
       setLoading(true)
-      // Compress immediately on client-side
-      const compressedFiles = await Promise.all(combinedFiles.map(async (file) => {
-         // Re-compress existing previously compressed ones? No, just compress the new ones
-         // Actually simpler to compress all files just to be safe if array changed
-         return compressImage(file)
-      }))
-
+      const compressedFiles = await Promise.all(combinedFiles.map(async (file) => compressImage(file)))
       setImages(compressedFiles)
-      
-      // Generate preview URLs
       const urls = compressedFiles.map(f => URL.createObjectURL(f))
       setPreviewUrls(prev => {
-        prev.forEach(u => URL.revokeObjectURL(u)) // cleanup memory
+        prev.forEach(u => URL.revokeObjectURL(u))
         return urls
       })
-      
       setError(null)
     } catch (err) {
-      setError('Failed to compress one or more images.')
+      setError('Image compression bottleneck. Try smaller files.')
     } finally {
       setLoading(false)
     }
@@ -76,26 +86,36 @@ export default function PostListing() {
     })
   }
 
+  const validateStep1 = () => {
+    if (images.length === 0) return 'Add at least one photo.'
+    if (formData.title.length < 3) return 'Title too short.'
+    if (!formData.price || Number(formData.price) <= 0) return 'Invalid price.'
+    if (!formData.category) return 'Select a category.'
+    return null
+  }
+
+  const nextStep = () => {
+    const err = validateStep1()
+    if (err) {
+       setError(err)
+       return
+    }
+    setError(null)
+    setStep(2)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    // Data prep
     const rawData = {
       ...formData,
       price: Number(formData.price),
     }
 
-    // Client Validation
-    const validation = validators.createListing.safeParse(rawData)
+    const validation = listingSchema.safeParse(rawData)
     if (!validation.success) {
-      // Pick the first error message
       setError(validation.error.issues[0].message)
-      return
-    }
-
-    if (images.length === 0) {
-      setError('Please add at least 1 image of your item.')
       return
     }
 
@@ -103,15 +123,9 @@ export default function PostListing() {
 
     try {
       const dbFormData = new FormData()
-      dbFormData.append('title', rawData.title)
-      dbFormData.append('description', rawData.description)
-      dbFormData.append('price', rawData.price.toString())
-      dbFormData.append('negotiable', rawData.negotiable.toString())
-      dbFormData.append('category', rawData.category)
-      dbFormData.append('condition', rawData.condition)
-      if (rawData.whatsappNumber) {
-        dbFormData.append('whatsappNumber', rawData.whatsappNumber)
-      }
+      Object.entries(rawData).forEach(([key, val]) => {
+        dbFormData.append(key, val.toString())
+      })
 
       images.forEach((file) => {
         dbFormData.append('images', file)
@@ -124,11 +138,8 @@ export default function PostListing() {
 
       const data = await res.json()
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to post listing')
-      }
+      if (!res.ok) throw new Error(data.error || 'Publishing fault')
 
-      // Success
       router.push(`/listing/${data.slug}`)
     } catch (err: any) {
       setError(err.message)
@@ -137,170 +148,186 @@ export default function PostListing() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto mt-8 mb-16">
-      <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">Post a Deal</h1>
-      <p className="text-gray-500 mb-8 border-b border-gray-200 pb-4">
-        Items listed here enter a secure AI checking queue to prevent spam and scams before appearing in the campus feed.
-      </p>
+    <div className="max-w-[1280px] mx-auto px-4 py-12 flex flex-col items-center">
+      
+      {/* Progress Stepper */}
+      <div className="w-full max-w-lg flex items-center justify-between mb-12 relative px-4">
+          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-100 -translate-y-1/2 z-0" />
+          <div className={cn("absolute top-1/2 left-0 h-0.5 bg-[#2D9A54] -translate-y-1/2 transition-all duration-500 z-0", step === 1 ? "w-0" : "w-full")} />
+          
+          <div className={cn("relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-black transition-all duration-500", step >= 1 ? "bg-[#2D9A54] text-white scale-110 shadow-lg shadow-[#2D9A54]/20" : "bg-white border-2 border-gray-100 text-gray-300")}>1</div>
+          <div className={cn("relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-black transition-all duration-500", step === 2 ? "bg-[#2D9A54] text-white scale-110 shadow-lg shadow-[#2D9A54]/20" : "bg-white border-2 border-gray-100 text-gray-300")}>2</div>
+      </div>
 
-      {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-start gap-3 mb-6 border border-red-100">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <p className="font-medium text-sm">{error}</p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="w-full max-w-2xl bg-white border border-gray-100 rounded-[3rem] shadow-premium p-8 md:p-14 animate-in fade-in zoom-in-95 duration-500">
         
-        {/* Images */}
-        <div className="flex flex-col gap-2">
-          <label className="font-bold text-[#1A1A1A]">Item Images <span className="text-red-500">*</span></label>
-          <span className="text-xs text-gray-500 mb-2">Max 2 images. Images will be vertically aligned in the thumbnail crop.</span>
-          
-          <div className="flex gap-4 flex-wrap">
-            {previewUrls.map((url, i) => (
-              <div key={i} className="relative w-32 h-32 rounded-xl border border-gray-200 overflow-hidden group">
-                <img src={url} alt="upload preview" className="w-full h-full object-cover" />
+        <header className="mb-10 text-center">
+            <h1 className="text-4xl font-black text-gray-900 tracking-tighter mb-2">
+                {step === 1 ? 'List your item' : 'Final Details'}
+            </h1>
+            <p className="text-gray-500 font-medium">Add your item to the campus marketplace.</p>
+        </header>
+
+        {error && (
+            <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 text-sm font-bold animate-shake">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                {error}
+            </div>
+        )}
+
+        {step === 1 ? (
+            <div className="flex flex-col gap-8 animate-in slide-in-from-right-4 duration-500">
+                {/* Images */}
+                <div className="flex flex-col gap-3">
+                    <label className="text-[10px] uppercase font-black tracking-widest text-gray-400 pl-1">Photos (Max 2)</label>
+                    <div className="flex gap-4">
+                        {previewUrls.map((url, i) => (
+                            <div key={i} className="relative w-32 h-32 rounded-[2rem] border-4 border-white shadow-xl overflow-hidden group">
+                                <img src={url} alt="preview" className="w-full h-full object-cover" />
+                                <button onClick={() => removeImage(i)} className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </div>
+                        ))}
+                        {previewUrls.length < 2 && (
+                            <button 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-32 h-32 rounded-[2rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-[#2D9A54] hover:text-[#2D9A54] hover:bg-emerald-50 transition-all active:scale-95"
+                            >
+                                <Camera className="w-6 h-6" />
+                                <span className="text-[10px] font-black uppercase">Add Photo</span>
+                            </button>
+                        )}
+                    </div>
+                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+                </div>
+
+                <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-gray-400 pl-1 text-sm font-bold">Item Headline</label>
+                        <input 
+                            placeholder="E.g. Macbook Pro M1 2020 Mint Condition"
+                            className="w-full h-14 bg-gray-50 rounded-2xl px-6 font-bold text-gray-900 border-none focus:ring-4 focus:ring-[#2D9A54]/10 transition-all outline-none"
+                            value={formData.title}
+                            onChange={(e) => setFormData({...formData, title: e.target.value})}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                             <label className="text-[10px] uppercase font-black tracking-widest text-gray-400 pl-1 text-sm font-bold">Ask Price (₹)</label>
+                             <div className="relative">
+                                <input 
+                                    type="number"
+                                    placeholder="2500"
+                                    className="w-full h-14 bg-gray-50 rounded-2xl pl-12 pr-6 font-bold text-gray-900 border-none focus:ring-4 focus:ring-[#2D9A54]/10 transition-all outline-none"
+                                    value={formData.price}
+                                    onChange={(e) => setFormData({...formData, price: e.target.value})}
+                                />
+                                <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-400">₹</span>
+                             </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[10px] uppercase font-black tracking-widest text-gray-400 pl-1 text-sm font-bold">Sector/Category</label>
+                            <select 
+                                className="w-full h-14 bg-gray-50 rounded-2xl px-6 font-bold text-gray-900 border-none focus:ring-4 focus:ring-[#2D9A54]/10 transition-all outline-none appearance-none"
+                                value={formData.category}
+                                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                            >
+                                <option value="">Select Category</option>
+                                {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <input 
+                        type="checkbox" 
+                        id="neg"
+                        className="w-5 h-5 accent-[#2D9A54]" 
+                        checked={formData.negotiable}
+                        onChange={(e) => setFormData({...formData, negotiable: e.target.checked})}
+                    />
+                    <label htmlFor="neg" className="text-sm font-bold text-gray-700 cursor-pointer select-none">Open to price negotiation</label>
+                </div>
+
                 <button 
-                  type="button" 
-                  onClick={() => removeImage(i)}
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition"
+                    onClick={nextStep}
+                    className="w-full h-16 bg-[#1A1A1A] hover:bg-black text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 mt-4"
                 >
-                  <X className="w-3 h-3" />
+                    Continue to Step 2 <ArrowRight className="w-5 h-5" />
                 </button>
-              </div>
-            ))}
-            
-            {previewUrls.length < 2 && (
-              <button 
-                type="button"
-                className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 hover:border-[#2D9A54] hover:bg-green-50/30 transition text-gray-500 hover:text-[#2D9A54] disabled:opacity-50"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={loading}
-              >
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <ImagePlus className="w-6 h-6" />}
-                <span className="text-xs font-medium">Add Photo</span>
-              </button>
-            )}
-          </div>
-          <input 
-            type="file" 
-            accept="image/*" 
-            multiple 
-            className="hidden" 
-            ref={fileInputRef} 
-            onChange={handleImageSelect} 
-          />
-        </div>
+            </div>
+        ) : (
+            <div className="flex flex-col gap-8 animate-in slide-in-from-right-4 duration-500">
+                <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase font-black tracking-widest text-gray-400 pl-1 text-sm font-bold">Description</label>
+                    <textarea 
+                        rows={5}
+                        placeholder="Battery health, defects, accessories, etc."
+                        className="w-full p-6 bg-gray-50 rounded-[2rem] font-bold text-gray-900 border-none focus:ring-4 focus:ring-[#2D9A54]/10 transition-all outline-none resize-none"
+                        value={formData.description}
+                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    />
+                </div>
 
-        {/* Title & Price */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 flex flex-col gap-2">
-            <label className="font-bold text-[#1A1A1A]">Title <span className="text-red-500">*</span></label>
-            <input 
-              required
-              maxLength={100}
-              placeholder="E.g. Macbook Pro M1 2020 Mint Condition"
-              className="w-full p-3 bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#2D9A54]"
-              value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-            />
-          </div>
-          <div className="flex flex-col gap-2 relative">
-            <label className="font-bold text-[#1A1A1A]">Price (₹) <span className="text-red-500">*</span></label>
-            <input 
-              required
-              type="number"
-              min="0"
-              max="999999"
-              placeholder="2500"
-              className="w-full p-3 bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#2D9A54]"
-              value={formData.price}
-              onChange={(e) => setFormData({...formData, price: e.target.value})}
-            />
-            <label className="flex items-center gap-2 mt-2 cursor-pointer">
-              <input 
-                type="checkbox" 
-                className="w-4 h-4 accent-[#2D9A54]" 
-                checked={formData.negotiable}
-                onChange={(e) => setFormData({...formData, negotiable: e.target.checked})}
-              />
-              <span className="text-sm text-gray-600 font-medium select-none">Negotiable</span>
-            </label>
-          </div>
-        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-gray-400 pl-1 text-sm font-bold">State/Condition</label>
+                        <select 
+                            className="w-full h-14 bg-gray-50 rounded-2xl px-6 font-bold text-gray-900 border-none focus:ring-4 focus:ring-[#2D9A54]/10 transition-all outline-none appearance-none"
+                            value={formData.condition}
+                            onChange={(e) => setFormData({...formData, condition: e.target.value})}
+                        >
+                            <option value="">Select Condition</option>
+                            <option value="new">Brand New</option>
+                            <option value="like-new">Like New</option>
+                            <option value="good">Good State</option>
+                            <option value="used">Used/Fair</option>
+                            <option value="damaged">Damaged</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-gray-400 pl-1 text-sm font-bold">WhatsApp (+91)</label>
+                        <input 
+                            placeholder="9876543210"
+                            className="w-full h-14 bg-gray-50 rounded-2xl px-6 font-bold text-gray-900 border-none focus:ring-4 focus:ring-[#2D9A54]/10 transition-all outline-none"
+                            value={formData.whatsappNumber}
+                            onChange={(e) => setFormData({...formData, whatsappNumber: e.target.value})}
+                        />
+                    </div>
+                </div>
 
-        {/* Category & Condition */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex flex-col gap-2">
-            <label className="font-bold text-[#1A1A1A]">Category <span className="text-red-500">*</span></label>
-            <select 
-              required
-              className="w-full p-3 bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#2D9A54] appearance-none"
-              value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
-            >
-              <option value="" disabled>Select a Category...</option>
-              {categories.map((c) => (
-                <option key={c.slug} value={c.slug}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex flex-col gap-2">
-            <label className="font-bold text-[#1A1A1A]">Condition <span className="text-red-500">*</span></label>
-            <select 
-              required
-              className="w-full p-3 bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#2D9A54] appearance-none"
-              value={formData.condition}
-              onChange={(e) => setFormData({...formData, condition: e.target.value})}
-            >
-              <option value="" disabled>Select Item Condition...</option>
-              <option value="new">Brand New (Unopened)</option>
-              <option value="like-new">Like New (Barely used)</option>
-              <option value="good">Good (Normal wear)</option>
-              <option value="used">Used (Noticeable wear)</option>
-              <option value="damaged">Damaged (Needs repair)</option>
-            </select>
-          </div>
-        </div>
+                <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100 flex gap-4">
+                    <ShieldCheck className="w-6 h-6 text-[#2D9A54] shrink-0" />
+                    <div className="flex flex-col gap-1">
+                        <span className="text-sm font-black text-emerald-950">Secure Connect</span>
+                        <p className="text-xs text-emerald-800/60 font-bold leading-relaxed">
+                            Buyers reach you via WhatsApp. No middlemen involved.
+                        </p>
+                    </div>
+                </div>
 
-        {/* Description */}
-        <div className="flex flex-col gap-2">
-          <label className="font-bold text-[#1A1A1A]">Description <span className="text-red-500">*</span></label>
-          <textarea 
-            required
-            rows={5}
-            placeholder="Provide all essential details. Mention battery health, warranty status, accessories included, or any defects to avoid buyer disputes."
-            className="w-full p-3 bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#2D9A54] resize-none"
-            value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
-          />
-        </div>
+                <div className="flex gap-4 mt-4">
+                    <button 
+                        onClick={() => setStep(1)}
+                        className="h-16 px-8 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-black transition-all active:scale-95"
+                    >
+                        <ArrowLeft className="w-6 h-6" />
+                    </button>
+                    <button 
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="flex-1 h-16 bg-[#2D9A54] hover:bg-[#258246] text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                    >
+                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Publish Listing <CheckCircle2 className="w-6 h-6" /></>}
+                    </button>
+                </div>
+            </div>
+        )}
 
-        {/* Contact Info */}
-        <div className="flex flex-col gap-2 bg-gray-50 p-4 rounded-xl border border-gray-200 mt-2">
-          <label className="font-bold text-[#1A1A1A]">WhatsApp Contact Number</label>
-          <span className="text-xs text-gray-500 mb-2">We will never display your number publicly. Buyers click a button to initiate a chat with you. Must include country code (+91).</span>
-          <input 
-            type="text"
-            placeholder="+919876543210"
-            className="w-full p-3 bg-white border border-[#E5E5E5] rounded-lg focus:outline-none focus:border-[#2D9A54]"
-            value={formData.whatsappNumber}
-            onChange={(e) => setFormData({...formData, whatsappNumber: e.target.value})}
-          />
-        </div>
-
-        {/* Submission */}
-        <button 
-          type="submit" 
-          disabled={loading}
-          className="w-full mt-4 bg-[#2D9A54] hover:bg-[#258246] transition-colors text-white font-bold text-lg py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-75"
-        >
-          {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Publishing...</> : 'Publish Listing'}
-        </button>
-
-      </form>
+      </div>
     </div>
   )
 }

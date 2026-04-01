@@ -108,9 +108,9 @@ export default function AdminSettingsPage() {
            </div>
 
            <div className="flex-1 text-center md:text-left">
-              <h3 className="text-xl font-bold text-gray-900">Maintenance Protocol</h3>
+              <h3 className="text-xl font-bold text-gray-900">Maintenance Mode</h3>
               <p className="text-gray-500 text-sm mt-1 max-w-md">
-                 Globally disable all student access to listings, profiles, and dashboards. Site will display a system-wide banner.
+                 Globally disable all user access to listings, profiles, and dashboards. The site will display a system-wide banner.
               </p>
            </div>
 
@@ -123,7 +123,7 @@ export default function AdminSettingsPage() {
                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
              }`}
            >
-             {saving === 'maintenanceMode' ? <Loader2 className="w-4 h-4 animate-spin mx-auto"/> : config.maintenanceMode ? 'ENGAGED' : 'OFFLINE'}
+             {saving === 'maintenanceMode' ? <Loader2 className="w-4 h-4 animate-spin mx-auto"/> : config.maintenanceMode ? 'Active' : 'Inactive'}
            </button>
         </section>
 

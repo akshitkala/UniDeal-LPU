@@ -1,7 +1,7 @@
-import jwt from 'jsonwebtoken'
+import * as jose from 'jose'
 
-const JWT_SECRET = process.env.JWT_SECRET!
-const REFRESH_SECRET = process.env.REFRESH_SECRET!
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
+const REFRESH_SECRET = new TextEncoder().encode(process.env.REFRESH_SECRET!)
 
 export interface JWTPayload {
   uid: string
@@ -11,19 +11,37 @@ export interface JWTPayload {
 }
 
 // Access token — 15 minutes TTL
-export function signAccessToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' })
+export async function signAccessToken(payload: JWTPayload): Promise<string> {
+  return await new jose.SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(JWT_SECRET)
 }
 
 // Refresh token — 7 days TTL
-export function signRefreshToken(payload: JWTPayload): string {
-  return jwt.sign(payload, REFRESH_SECRET, { expiresIn: '7d' })
+export async function signRefreshToken(payload: JWTPayload): Promise<string> {
+  return await new jose.SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(REFRESH_SECRET)
 }
 
-export function verifyAccessToken(token: string): JWTPayload {
-  return jwt.verify(token, JWT_SECRET) as JWTPayload
+export async function verifyAccessToken(token: string): Promise<JWTPayload | null> {
+  try {
+    const { payload } = await jose.jwtVerify(token, JWT_SECRET)
+    return payload as unknown as JWTPayload
+  } catch (error) {
+    return null
+  }
 }
 
-export function verifyRefreshToken(token: string): JWTPayload {
-  return jwt.verify(token, REFRESH_SECRET) as JWTPayload
+export async function verifyRefreshToken(token: string): Promise<JWTPayload | null> {
+  try {
+    const { payload } = await jose.jwtVerify(token, REFRESH_SECRET)
+    return payload as unknown as JWTPayload
+  } catch (error) {
+    return null
+  }
 }

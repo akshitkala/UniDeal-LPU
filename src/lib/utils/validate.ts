@@ -51,7 +51,7 @@ export const browseSchema = z.object({
   maxPrice: z.coerce.number().optional(),
   sort: z.enum(['newest', 'oldest', 'price_asc', 'price_desc', 'views']).default('newest'),
   cursor: z.string().optional(),
-  limit: z.coerce.number().min(1).max(50).default(20),
+  limit: z.coerce.number().min(1).max(100).default(24),
   // FIXED: search query validated and sanitised (Fix 4)
   q: z.string()
     .max(100)

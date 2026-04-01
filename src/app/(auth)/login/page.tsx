@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react'
 import { signInWithGoogle } from '@/lib/auth/firebase'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { LogIn, Loader2, ShieldCheck, Mail } from 'lucide-react'
+import { LogIn, Loader2, ShieldCheck, Mail, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 
 function LoginContent() {
@@ -18,22 +18,17 @@ function LoginContent() {
     setLoading(true)
     setError(null)
     try {
-      // 1. Firebase Auth Client Sign-In
       const idToken = await signInWithGoogle()
-      
-      // 2. Exchange for Session Cookies
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firebaseIdToken: idToken })
       })
-
       const data = await res.json()
 
       if (!res.ok) {
         setError(data.error || 'Identity Verification Failed.')
       } else {
-        // Redirection with local refresh
         router.push(returnTo)
         router.refresh()
       }
@@ -46,81 +41,93 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center relative p-6 bg-white overflow-hidden">
+      
+      {/* Background Decor */}
+      <div className="absolute inset-0 z-0">
+         <img 
+           src="/hero-bg.png" 
+           alt="Campus Backdrop" 
+           className="w-full h-full object-cover opacity-10 blur-xl scale-125"
+         />
+         <div className="absolute inset-0 bg-gradient-to-tr from-emerald-50 via-white to-white" />
+      </div>
+
+      <div className="absolute top-20 left-10 w-96 h-96 bg-emerald-300/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl" />
+
       {/* Login Card */}
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100 p-8 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        
-        {/* Brand/Logo Section */}
-        <div className="text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-4">
-             <div className="text-3xl font-extrabold text-[#2D9A54]">UD</div>
+      <div className="relative z-10 w-full max-w-lg">
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] border border-white p-10 md:p-14 flex flex-col items-center">
+          
+          {/* Logo & Headline */}
+          <div className="w-20 h-20 bg-emerald-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-emerald-600/30 mb-8 border-4 border-white">
+             <div className="text-3xl font-black text-white italic">UD</div>
           </div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">UniDeal</h1>
-          <p className="text-gray-500 mt-1 font-medium italic">Exclusive LPU Marketplace</p>
-        </div>
+          
+          <h1 className="text-4xl font-extrabold text-[#1A1A1A] tracking-tighter mb-2">Welcome Back!</h1>
+          <p className="text-gray-500 font-bold text-center mb-10 max-w-xs">
+            Sign in to access the campus <br /> marketplace.
+          </p>
 
-        {/* Security Alert Header */}
-        <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex gap-3 items-start">
-           <ShieldCheck className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-           <p className="text-xs text-blue-700 leading-relaxed font-medium">
-             Authentication is restricted to verified <span className="font-bold">@lpu.in</span> addresses. Ensure your Google account is pre-authenticated with your student identity.
-           </p>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm font-bold animate-in shake duration-300">
-            {error}
-          </div>
-        )}
-
-        {/* Action Button */}
-        <button 
-          onClick={handleGoogleLogin} 
-          disabled={loading}
-          className="w-full h-14 bg-gray-900 hover:bg-black text-white px-6 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed group"
-        >
-          {loading ? (
-            <Loader2 className="w-6 h-6 animate-spin" />
-          ) : (
-            <>
-              <Image 
-                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                width={20} 
-                height={20} 
-                alt="Google" 
-                className="group-hover:opacity-90"
-              />
-              Continue with LPU Mail
-            </>
+          {error && (
+            <div className="w-full bg-rose-50 border border-rose-100 text-rose-600 px-6 py-4 rounded-2xl text-sm font-bold mb-6">
+              {error}
+            </div>
           )}
-        </button>
 
-        {/* Footer Info */}
-        <div className="text-center space-y-4">
-           <p className="text-xs text-gray-400 max-w-xs mx-auto">
-             By continuing, you agree to our <a href="/terms" className="text-gray-900 font-bold hover:underline">Terms of Service</a> and <a href="/privacy" className="text-gray-900 font-bold hover:underline">Privacy Policy</a>.
-           </p>
-           
-           <div className="flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest text-[#2D9A54] font-black opacity-60">
-              <LogIn className="w-3 h-3" />
-              Secure LPU Link
-           </div>
+          {/* Core Action */}
+          <button 
+            onClick={handleGoogleLogin} 
+            disabled={loading}
+            className="w-full h-16 bg-[#1A1A1A] hover:bg-black text-white rounded-[1.5rem] font-bold text-lg flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-gray-900/10 disabled:opacity-50 disabled:cursor-wait group"
+          >
+            {loading ? (
+              <Loader2 className="w-7 h-7 animate-spin" />
+            ) : (
+              <>
+                <div className="bg-white p-1.5 rounded-lg shadow-sm">
+                  <Image 
+                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                    width={20} 
+                    height={20} 
+                    alt="Google" 
+                  />
+                </div>
+                Sign in with Google
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform opacity-50" />
+              </>
+            )}
+          </button>
+
+          {/* Social Proof/Trust */}
+          <div className="mt-12 pt-8 border-t border-gray-100 w-full text-center">
+             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Trusted by 5,000+ Users</p>
+             <div className="flex justify-center gap-2">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 -ml-2" />
+                ))}
+                <div className="w-8 h-8 rounded-full border-2 border-white bg-emerald-50 text-[10px] font-black text-emerald-600 flex items-center justify-center -ml-2">
+                  +5k
+                </div>
+             </div>
+          </div>
+
+          <p className="mt-10 text-[10px] font-bold text-gray-300 uppercase tracking-widest hover:text-emerald-500 cursor-pointer transition-colors">
+            Secure Infrastructure • Peer-to-Peer
+          </p>
         </div>
-
       </div>
     </div>
   )
 }
 
-/**
- * S-01: Dedicated Login Page (Fix 16).
- * Features: Exclusive Google Auth, strict LPU warning, error handling.
- */
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-10 h-10 text-[#2D9A54] animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <div className="w-16 h-16 border-4 border-emerald-500 border-t-white rounded-full animate-spin" />
+        <p className="mt-6 text-emerald-950 font-bold animate-pulse">Initializing Secure Tunnel...</p>
       </div>
     }>
       <LoginContent />

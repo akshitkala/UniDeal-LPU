@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'Privacy Policy | UniDeal',
-  description: 'How we protect your data and privacy on the LPU campus marketplace.'
+  description: 'How we protect your data and privacy on the campus marketplace.'
 }
 
 export default function PrivacyPolicy() {
@@ -11,7 +11,7 @@ export default function PrivacyPolicy() {
     {
       title: 'Data Collection',
       icon: <Eye className="w-6 h-6 text-[#2D9A54]" />,
-      content: 'We collect your LPU email, display name, and profile picture via Google Auth solely to verify your campus identity. Phone numbers are stored securely and never exposed raw to other users.'
+      content: 'We collect your email, display name, and profile picture via Google Auth solely to manage your account. Phone numbers are stored securely and never exposed raw to other users.'
     },
     {
       title: 'WhatsApp Privacy',
@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
     {
       title: 'Right to Overwrite',
       icon: <Trash2 className="w-6 h-6 text-[#2D9A54]" />,
-      content: 'At any time, you can trigger a "Cascade Wipe" from your settings. this permanently deletes your user profile, active listings, and associated images from our MongoDB and Cloudinary buckets.'
+      content: 'At any time, you can trigger a "Cascade Wipe" from your profile. This permanently deletes your user profile, active listings, and associated images from our MongoDB and Cloudinary buckets.'
     },
     {
       title: 'Compliance',
@@ -40,7 +40,7 @@ export default function PrivacyPolicy() {
       <div className="text-center mb-16">
         <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Privacy Policy</h1>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          At UniDeal, we take student privacy seriously. Our architecture is built with "privacy-by-default" principles specifically for the LPU campus community.
+          At UniDeal, we take user privacy seriously. Our architecture is built with "privacy-by-default" principles specifically for the campus community.
         </p>
       </div>
 

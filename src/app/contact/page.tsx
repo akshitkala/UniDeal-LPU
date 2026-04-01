@@ -77,8 +77,8 @@ export default function ContactPage() {
              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                <CheckCircle className="w-8 h-8 text-[#2D9A54]"/>
              </div>
-             <h2 className="text-2xl font-bold text-gray-900">Vector Secure</h2>
-             <p className="text-gray-500 mt-2">Your transmission has been encrypted and logged. Expect a response from UniDeal Administration within 48 hours to your associated email.</p>
+             <h2 className="text-2xl font-bold text-gray-900">Message Sent</h2>
+             <p className="text-gray-500 mt-2">Your inquiry has been received. Expect a response from UniDeal Support within 48 hours to your associated email.</p>
              <button 
                onClick={() => { setStatus('idle'); setFormData({ name: '', email: '', subject: 'general', message: '' }) }}
                className="mt-6 font-semibold text-[#2D9A54] border border-[#2D9A54] px-6 py-2 rounded-xl hover:bg-green-50 transition"
@@ -90,7 +90,7 @@ export default function ContactPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-bold text-gray-700">Student Name</label>
+              <label className="text-sm font-bold text-gray-700">Full Name</label>
               <input 
                 required
                 type="text" 
@@ -98,12 +98,12 @@ export default function ContactPage() {
                 onChange={e => setFormData({...formData, name: e.target.value})}
                 readOnly={!!user && !!user.displayName}
                 className={`h-12 rounded-xl px-4 border ${user ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-white border-[#E5E5E5] focus:border-[#2D9A54] focus:ring-1 focus:ring-[#2D9A54] outline-none transition'}`}
-                placeholder="Jane Doe"
+                placeholder="Enter your name"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-bold text-gray-700">Secure Email</label>
+              <label className="text-sm font-bold text-gray-700">Email Address</label>
               <input 
                 required
                 type="email" 
@@ -111,12 +111,12 @@ export default function ContactPage() {
                 onChange={e => setFormData({...formData, email: e.target.value})}
                 readOnly={!!user && !!user.email}
                 className={`h-12 rounded-xl px-4 border ${user ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-white border-[#E5E5E5] focus:border-[#2D9A54] focus:ring-1 focus:ring-[#2D9A54] outline-none transition'}`}
-                placeholder="jane@example.com"
+                placeholder="Enter your email"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-bold text-gray-700">Inquiry Payload</label>
+              <label className="text-sm font-bold text-gray-700">Message</label>
               <textarea 
                 required
                 minLength={10}
@@ -125,7 +125,7 @@ export default function ContactPage() {
                 value={formData.message}
                 onChange={e => setFormData({...formData, message: e.target.value})}
                 className="rounded-xl p-4 border border-[#E5E5E5] bg-white text-gray-900 focus:border-[#2D9A54] focus:ring-1 focus:ring-[#2D9A54] outline-none transition resize-none"
-                placeholder="Describe the anomalies you are encountering in detail..."
+                placeholder="How can we help you?"
               />
               <span className="text-xs text-right text-gray-400 font-mono">{formData.message.length}/1000</span>
             </div>
@@ -142,7 +142,7 @@ export default function ContactPage() {
               type="submit" 
               className="mt-2 h-12 w-full bg-[#1A1A1A] hover:bg-black text-white font-bold rounded-xl transition-all shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {status === 'loading' ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-4 h-4"/> Transmit Payload</>}
+              {status === 'loading' ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-4 h-4"/> Send Message</>}
             </button>
 
           </form>

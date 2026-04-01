@@ -24,111 +24,111 @@ export default function UsersManagement() {
 
   const fetchUsers = async () => {
     setLoading(true)
-    try {
-      const qParams = searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''
-      const res = await fetch(`/api/admin/users${qParams}`)
-      if (res.ok) {
-        const data = await res.json()
-        setUsers(data.users)
-        setError(null)
+      try {
+        const qParams = searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''
+        const res = await fetch(`/api/admin/users${qParams}`)
+        if (res.ok) {
+          const data = await res.json()
+          setUsers(data.users)
+          setError(null)
+        }
+      } catch {
+        setError('Sync Error: Failed to retrieve user database.')
+      } finally {
+        setLoading(false)
       }
-    } catch {
-      setError('Global Sync Error: Failed to retrieve student registry.')
-    } finally {
-      setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    // Debounce search pattern
-    const timeoutId = setTimeout(() => {
-       fetchUsers()
-    }, 400)
-    return () => clearTimeout(timeoutId)
-  }, [searchQuery])
-
-  const handleAction = async () => {
-    if (!modalConfig.id) return
-    setActionLoading(true)
-    
-    try {
-      let res
-      if (modalConfig.type === 'delete') {
-         res = await fetch(`/api/admin/users/${modalConfig.id}`, { method: 'DELETE' })
-      } else {
-         res = await fetch(`/api/admin/users/${modalConfig.id}`, {
-           method: 'PATCH',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ action: modalConfig.type, reason: reasonInput })
-         })
-      }
-
-      const data = await res.json()
-      if (res.ok) {
-         setModalConfig({ isOpen: false, type: 'ban', id: null, displayName: '' })
-         setReasonInput('')
-         setError(null)
+  
+    useEffect(() => {
+      // Debounce search pattern
+      const timeoutId = setTimeout(() => {
          fetchUsers()
-      } else {
-         setError(data.error || 'Directive failure')
-      }
-    } catch (e) {
-      setError('Vector Exception: Network disruption during action.')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-8 max-w-7xl mx-auto mb-20">
+      }, 400)
+      return () => clearTimeout(timeoutId)
+    }, [searchQuery])
+  
+    const handleAction = async () => {
+      if (!modalConfig.id) return
+      setActionLoading(true)
       
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-[#1A1A1A]">User Management</h1>
-          <p className="text-gray-500 mt-1">Suspend fraudulent actors or escalate global wipes across the student registry.</p>
-        </div>
+      try {
+        let res
+        if (modalConfig.type === 'delete') {
+           res = await fetch(`/api/admin/users/${modalConfig.id}`, { method: 'DELETE' })
+        } else {
+           res = await fetch(`/api/admin/users/${modalConfig.id}`, {
+             method: 'PATCH',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ action: modalConfig.type, reason: reasonInput })
+           })
+        }
+  
+        const data = await res.json()
+        if (res.ok) {
+           setModalConfig({ isOpen: false, type: 'ban', id: null, displayName: '' })
+           setReasonInput('')
+           setError(null)
+           fetchUsers()
+        } else {
+           setError(data.error || 'Action failed')
+        }
+      } catch (e) {
+        setError('Network Error: Action failed.')
+      } finally {
+        setActionLoading(false)
+      }
+    }
+  
+    return (
+      <div className="flex flex-col gap-8 max-w-7xl mx-auto mb-20">
         
-        <div className="relative w-full md:w-80">
-          <input 
-            type="text"
-            placeholder="Search by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl outline-none focus:border-[#2D9A54] focus:ring-1 focus:ring-[#2D9A54] transition shadow-sm text-sm"
-          />
-          <Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
-        </div>
-      </div>
-
-      {error && (
-        <Banner 
-          message={error} 
-          variant="error" 
-          onClose={() => setError(null)} 
-        />
-      )}
-
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
-        {loading ? (
-          <div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 text-[#2D9A54] animate-spin" /></div>
-        ) : users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-20 text-center">
-            <UserX className="w-12 h-12 text-gray-300 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800">No users found</h3>
-            <p className="text-gray-500 mt-2">Try adjusting your search criteria.</p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-[#1A1A1A]">User Management</h1>
+            <p className="text-gray-500 mt-1">Manage accounts, handle reports, and suspend fraudulent actors across the platform.</p>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-[#F9F9F9] border-b border-[#E5E5E5] text-gray-500 uppercase text-xs font-bold tracking-wider">
-                <tr>
-                  <th className="p-4">Student Identity</th>
-                  <th className="p-4">Role & Status</th>
-                  <th className="p-4">Listings</th>
-                  <th className="p-4">Joined</th>
-                  <th className="p-4 text-right">Sanctions</th>
-                </tr>
-              </thead>
+          
+          <div className="relative w-full md:w-80">
+            <input 
+              type="text"
+              placeholder="Search by name or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl outline-none focus:border-[#2D9A54] focus:ring-1 focus:ring-[#2D9A54] transition shadow-sm text-sm"
+            />
+            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+          </div>
+        </div>
+  
+        {error && (
+          <Banner 
+            message={error} 
+            variant="error" 
+            onClose={() => setError(null)} 
+          />
+        )}
+  
+        <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
+          {loading ? (
+            <div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 text-[#2D9A54] animate-spin" /></div>
+          ) : users.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-20 text-center">
+              <UserX className="w-12 h-12 text-gray-300 mb-4" />
+              <h3 className="text-xl font-bold text-gray-800">No users found</h3>
+              <p className="text-gray-500 mt-2">Try adjusting your search criteria.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-gray-600">
+                <thead className="bg-[#F9F9F9] border-b border-[#E5E5E5] text-gray-500 uppercase text-xs font-bold tracking-wider">
+                  <tr>
+                    <th className="p-4">User Identity</th>
+                    <th className="p-4">Role & Status</th>
+                    <th className="p-4">Listings</th>
+                    <th className="p-4">Joined</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
               <tbody className="divide-y divide-[#E5E5E5]">
                 {users.map((u) => (
                   <tr key={u._id} className="hover:bg-gray-50 transition-colors">

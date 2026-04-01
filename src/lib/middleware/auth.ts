@@ -23,14 +23,17 @@ export function withAuth(
         return NextResponse.json({ error: 'Unauthorised — no token' }, { status: 401 })
       }
 
-      const payload = verifyAccessToken(token)
+      const payload = await verifyAccessToken(token)
+      if (!payload) {
+        return NextResponse.json({ error: 'Unauthorised — invalid or expired token' }, { status: 401 })
+      }
 
       // isActive check happens at login and on each protected request
       // Banned users (isActive:false) cannot obtain a new JWT — middleware enforces this
       // The payload role/uid are embedded in JWT — DB check only for ban status handled at login
       return handler(req, payload, context)
-    } catch {
-      return NextResponse.json({ error: 'Unauthorised — invalid or expired token' }, { status: 401 })
+    } catch (error) {
+      return NextResponse.json({ error: 'Unauthorised — session verification failure' }, { status: 401 })
     }
   }
 }

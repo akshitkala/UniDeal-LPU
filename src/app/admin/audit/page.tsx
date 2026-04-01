@@ -19,7 +19,7 @@ export default function AuditLog() {
         setError(null)
       }
     } catch {
-      setError('Trace Recovery Exception: Cryptographic audit stream disrupted.')
+      setError('Sync Error: Failed to retrieve audit data.')
     } finally {
       setLoading(false)
     }
@@ -34,7 +34,7 @@ export default function AuditLog() {
       
       <div>
         <h1 className="text-3xl font-extrabold text-[#1A1A1A]">Audit Log</h1>
-        <p className="text-gray-500 mt-1">Immutable cryptographic trace of all administrative executions on the UniDeal network.</p>
+        <p className="text-gray-500 mt-1">Record of all administrative actions on the marketplace.</p>
       </div>
 
       {error && (
@@ -51,17 +51,17 @@ export default function AuditLog() {
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-20 text-center">
             <Database className="w-12 h-12 text-gray-300 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800">No traces detected</h3>
-            <p className="text-gray-500 mt-2">Administrative payload stream is empty.</p>
+            <h3 className="text-xl font-bold text-gray-800">No logs found</h3>
+            <p className="text-gray-500 mt-2">Administrative action stream is empty.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-600">
               <thead className="bg-[#F9F9F9] border-b border-[#E5E5E5] text-gray-500 uppercase text-xs font-bold tracking-wider">
                 <tr>
-                  <th className="p-4">Action Pipeline</th>
-                  <th className="p-4">Authorization</th>
-                  <th className="p-4">Metadata Payload</th>
+                  <th className="p-4">Action</th>
+                  <th className="p-4">Actor</th>
+                  <th className="p-4">Details</th>
                   <th className="p-4 text-right">Timestamp</th>
                 </tr>
               </thead>
@@ -82,13 +82,12 @@ export default function AuditLog() {
                         <div className="flex items-center gap-2">
                            <div className="flex flex-col">
                              {log.actorType === 'deleted_user' ? (
-                                <span className="font-bold text-gray-900">System Trace (User Trigger)</span>
+                                <span className="font-bold text-gray-900">System (User Triggered)</span>
                              ) : (
-                                <span className="font-bold text-gray-900">{log.actor?.displayName || 'Ghost'}</span>
+                                <span className="font-bold text-gray-900">{log.actor?.displayName || 'System'}</span>
                              )}
                              <div className="flex items-center gap-1.5 mt-0.5">
-                               {log.actor?.isLpuVerified && <ShieldCheck className="w-3 h-3 text-[#2D9A54]"/>}
-                               <span className="text-xs text-gray-500">{log.actor?.email || 'System Exec'}</span>
+                               <span className="text-xs text-gray-500">{log.actor?.email || 'System Action'}</span>
                              </div>
                            </div>
                         </div>

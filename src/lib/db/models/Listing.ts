@@ -89,7 +89,11 @@ const ListingSchema = new Schema<IListing>(
     bumpedAt: { type: Date },
     bumpCount: { type: Number, default: 0, max: 3 },
     lastBumpAt: { type: Date },
-    expiresAt: { type: Date, required: true },
+    expiresAt: { 
+      type: Date, 
+      required: true,
+      default: () => new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+    },
     isExpired: { type: Boolean, default: false },
   },
   { timestamps: true }

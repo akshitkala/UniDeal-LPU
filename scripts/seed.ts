@@ -108,17 +108,22 @@ async function seed() {
     })
   }
 
-  // Create 20 sample listings (max 2 images each, all approved for homepage)
-  let created = 0
-  for (let i = 0; i < SAMPLE_TITLES.length; i++) {
-    const title = SAMPLE_TITLES[i]
-    const slug = `${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${nanoid(6)}`
-    const exists = await Listing.findOne({ title })
-    if (exists) {
-      console.log(`[Seed] Listing exists: ${title}`)
-      continue
-    }
+  // Step 0: Remove existing listings with no images
+  const deleted = await Listing.deleteMany({ images: { $size: 0 } })
+  console.log(`[Seed] Deleted ${deleted.deletedCount} listings with no images.`)
 
+  // Create 100 listings (random images from Picsum, all approved)
+  const TOTAL_TO_SEED = 100
+  let created = 0
+
+  for (let i = 0; i < TOTAL_TO_SEED; i++) {
+    const titleBase = SAMPLE_TITLES[i % SAMPLE_TITLES.length]
+    const title = i < SAMPLE_TITLES.length ? titleBase : `${titleBase} (Batch ${Math.floor(i / SAMPLE_TITLES.length)})`
+    const slug = `${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${nanoid(6)}`
+    
+    // Picsum random image URL (800x600 with seed for uniqueness)
+    const imageUrl = `https://picsum.photos/seed/${slug}/800/600`
+    
     const category = createdCategories[i % createdCategories.length]
     const condition = CONDITIONS[i % CONDITIONS.length]
     const price = Math.floor(Math.random() * 5000) + 200
@@ -126,27 +131,27 @@ async function seed() {
 
     await Listing.create({
       title,
-      description: `Second-hand ${title} in ${condition} condition. Available for pickup on campus. Message via WhatsApp to arrange.`,
+      description: `Premium quality ${title} in ${condition} condition. Available for quick pickup on campus. Price is ${i % 3 === 0 ? 'negotiable' : 'fixed'}. Contact me for more details.`,
       price,
       negotiable: i % 3 === 0,
       category: category._id,
       condition,
-      images: [], // No real images in seed — Cloudinary URLs added manually
+      images: [imageUrl], // Random placeholder image
       seller: sellerUser._id,
       sellerBanned: false,
-      status: 'approved', // Pre-approved for homepage demo
+      status: 'approved',
       isDeleted: false,
       aiFlagged: false,
       aiUnavailable: false,
-      aiVerification: { checked: true, flagged: false, flags: [], confidence: 0, reason: 'Seed data' },
+      aiVerification: { checked: true, flagged: false, flags: [], confidence: 1, reason: 'Seed data' },
       slug,
-      views: Math.floor(Math.random() * 100),
+      views: Math.floor(Math.random() * 200),
       bumpCount: 0,
       expiresAt,
       isExpired: false,
     })
     created++
-    console.log(`[Seed] Created listing: ${title}`)
+    if (created % 10 === 0) console.log(`[Seed] Created ${created}/${TOTAL_TO_SEED} listings...`)
   }
 
   console.log(`\n[Seed] Done! ${createdCategories.length} categories, ${created} listings created.`)
