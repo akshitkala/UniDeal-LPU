@@ -3,12 +3,14 @@
 import { useState, Suspense } from 'react'
 import { signInWithGoogle } from '@/lib/auth/firebase'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { LogIn, Loader2, ShieldCheck, Mail, ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 
 function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { setUser } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -29,8 +31,8 @@ function LoginContent() {
       if (!res.ok) {
         setError(data.error || 'Identity Verification Failed.')
       } else {
+        setUser(data.user)
         router.push(returnTo)
-        router.refresh()
       }
     } catch (err: any) {
       console.error('[Login Error]', err)

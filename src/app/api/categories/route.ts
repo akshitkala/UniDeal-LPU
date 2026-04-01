@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db/connect'
 import Category from '@/lib/db/models/Category'
+import redis from '@/lib/redis/client'
+import { CACHE_KEYS } from '@/lib/redis/cache'
 
 /**
  * GET: Retrieve all active categories for the public marketplace.
@@ -8,6 +10,10 @@ import Category from '@/lib/db/models/Category'
  */
 export async function GET() {
   try {
+    const cacheKey = CACHE_KEYS.CATEGORIES
+    const cached = await redis.get(cacheKey)
+    if (cached) return NextResponse.json(cached)
+
     await connectDB()
     
     // Fetch only active categories, sorted by name
@@ -15,6 +21,8 @@ export async function GET() {
       .select('name slug icon description')
       .sort({ name: 1 })
       .lean()
+
+    await redis.set(cacheKey, categories, { ex: 300 })
 
     return NextResponse.json(categories)
   } catch (error) {

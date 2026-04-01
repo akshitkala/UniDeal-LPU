@@ -1,9 +1,7 @@
-'use client'
-
-import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { formatDistanceToNow } from 'date-fns'
-import { Search } from 'lucide-react'
+import { Search, MapPin, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ListingCardProps {
@@ -25,36 +23,40 @@ interface ListingCardProps {
 }
 
 /**
- * UNIFIED LISTING CARD: The single source of truth for item previews.
- * - Used on Homepage, /browse, and /dashboard.
- * - Responsive: Supports 2 columns on mobile seamlessly.
- * - Interaction: Supports custom onClick or standard link behavior.
+ * UNIFIED LISTING CARD: High-fidelity preview for campus assets.
+ * - Optimized for mobile-first 2-column layout.
+ * - Next.js Image with Cloudinary q_85 transformations.
  */
 export function ListingCard({ listing, showSeller = true, actions }: ListingCardProps) {
+  const imageUrl = listing.images?.[0] 
+    ? `${listing.images[0]}?w=600&h=600&c_fill&q=85&f_auto` 
+    : null
+
   return (
     <Link 
       href={`/listing/${listing.slug}`}
-      className="group cursor-pointer bg-white border border-[#E5E5E5] hover:border-[#2D9A54] hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-full relative min-h-[320px]"
+      className="group bg-white border border-gray-100/50 hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 rounded-[2rem] overflow-hidden flex flex-col h-full relative"
     >
-      {/* Media: Squared Aspect */}
-      <div className="relative aspect-square w-full bg-gray-100 overflow-hidden">
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 z-1" />
-        
-        <span className="absolute top-3 left-3 z-10 font-black bg-[#2D9A54] text-white text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm">
-          {listing.category?.name || 'Item'}
-        </span>
-        
-        {listing.images && listing.images.length > 0 ? (
-          <img 
-            src={listing.images[0]} 
+      {/* Media Container: Square Locked */}
+      <div className="relative aspect-square w-full bg-gray-50 overflow-hidden">
+        {imageUrl ? (
+          <Image 
+            src={imageUrl} 
             alt={listing.title} 
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-700" 
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <Search className="w-10 h-10 opacity-20" />
+          <div className="w-full h-full flex items-center justify-center text-gray-200">
+            <Search className="w-8 h-8 opacity-20" />
           </div>
         )}
+        
+        {/* Category Badge */}
+        <span className="absolute top-4 left-4 z-10 font-black bg-white/90 backdrop-blur-md text-gray-900 text-[9px] uppercase tracking-[0.2em] px-2.5 py-1.5 rounded-xl shadow-sm border border-gray-100">
+          {listing.category?.name || 'Asset'}
+        </span>
       </div>
 
       {/* Content Cluster: Informational Signal */}

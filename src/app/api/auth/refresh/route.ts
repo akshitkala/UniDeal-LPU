@@ -14,8 +14,12 @@ export async function POST(req: NextRequest) {
 
     let payload
     try {
-      payload = verifyRefreshToken(refreshToken)
+      payload = await verifyRefreshToken(refreshToken)
     } catch {
+      return NextResponse.json({ error: 'Invalid or expired refresh token' }, { status: 401 })
+    }
+
+    if (!payload) {
       return NextResponse.json({ error: 'Invalid or expired refresh token' }, { status: 401 })
     }
 
@@ -31,11 +35,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Issue fresh access token with latest role (role may have changed)
-    const newAccessToken = signAccessToken({
+    const newAccessToken = await signAccessToken({
       uid: payload.uid,
       email: payload.email,
       role: user.role,
       displayName: user.displayName,
+      dbId: user._id.toString(), // Added missing dbId from common payload structure
     })
 
     await setAccessTokenCookie(newAccessToken)

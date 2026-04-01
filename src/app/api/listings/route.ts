@@ -4,6 +4,7 @@ import Listing from '@/lib/db/models/Listing'
 import Category from '@/lib/db/models/Category'
 import User from '@/lib/db/models/User'
 import redis from '@/lib/redis/client'
+import { CACHE_KEYS, invalidateFeed } from '@/lib/redis/cache'
 import { withAuth } from '@/lib/middleware/auth'
 import { uploadImageBuffer } from '@/lib/utils/cloudinary'
 import { browseSchema, listingSchema } from '@/lib/utils/validate'
@@ -192,6 +193,7 @@ export const POST = withAuth(async (req, user) => {
 
     // Save first — never blocks the response
     await newListing.save()
+    await invalidateFeed()
 
     // 6. Fire-and-forget AI Check (Fix 7)
     checkListingAI(

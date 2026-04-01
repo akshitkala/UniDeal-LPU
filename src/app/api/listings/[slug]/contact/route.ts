@@ -1,54 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withAuth } from '@/lib/middleware/auth'
 import { connectDB } from '@/lib/db/connect'
 import Listing from '@/lib/db/models/Listing'
 import User from '@/lib/db/models/User'
 import AdminActivity from '@/lib/db/models/AdminActivity'
 import redis from '@/lib/redis/client'
+import { withAuth } from '@/lib/middleware/auth'
 
+/**
+ * POST /api/listings/[slug]/contact
+ * Handles the "Reveal Contact" flow for logged-in users.
+ * - Rate limits to 50 reveals per day.
+ * - Records activity for audit.
+ * - Returns a direct wa.me link.
+ */
 export const POST = withAuth(async (req, user, context) => {
   try {
-    if (!context) return NextResponse.json({ error: 'Missing context' }, { status: 400 })
-    const { slug } = await context.params
+    const { slug } = await context!.params
     const userId = user.uid
 
-    // Rate Limiting (50 reveals/user/day)
+    // 1. Rate Limiting (50 contact reveals/user/day)
     const rateLimitKey = `ratelimit:contact:${userId}`
     const currentCount = await redis.incr(rateLimitKey)
-    if (currentCount === 1) {
-      // Set to expire in 24 hours
-      await redis.expire(rateLimitKey, 86400)
-    }
+    if (currentCount === 1) await redis.expire(rateLimitKey, 86400)
+    
     if (currentCount > 50) {
-      return NextResponse.json({ error: 'Daily contact limit reached (50 max)' }, { status: 429 })
+      return NextResponse.json({ error: 'Daily contact limit reached (50 max). Try again tomorrow.' }, { status: 429 })
     }
 
     await connectDB()
 
-    const listing = await Listing.findOne({ slug })
-    if (!listing) return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
-
-    // Check visibility manually just in case
-    if (listing.status !== 'approved' || listing.isDeleted || listing.sellerBanned || listing.aiFlagged) {
-      return NextResponse.json({ error: 'Listing unavailable' }, { status: 404 })
+    // 2. Fetch Listing
+    const listing = await Listing.findOne({ slug, isDeleted: false }).select('seller')
+    if (!listing) {
+      return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
     }
 
-    // Fetch Seller with explicit +whatsappNumber selection
-    const sellerUser = await User.findById(listing.seller).select('+whatsappNumber displayName')
-    if (!sellerUser) return NextResponse.json({ error: 'Seller account could not be located' }, { status: 404 })
-
-    // Build Payload Link
-    if (!sellerUser.whatsappNumber) {
-      return NextResponse.json({ error: 'Seller has not provided a WhatsApp number' }, { status: 400 })
+    // 3. Fetch Seller's WhatsApp (Explicitly select protected field)
+    const seller = await User.findById(listing.seller).select('+whatsappNumber')
+    if (!seller || !seller.whatsappNumber) {
+      return NextResponse.json({ error: 'no_number' }, { status: 404 })
     }
 
-    const cleanNumber = sellerUser.whatsappNumber.replace(/[^0-9]/g, '')
-    const message = encodeURIComponent(`Hi ${sellerUser.displayName}, I am interested in your listing: "${listing.title}" on UniDeal. Is it still available?`)
-    const waLink = `https://wa.me/${cleanNumber}?text=${message}`
-
-    // Minimal audit logging of the event
+    // 4. Log Activity
     await AdminActivity.create({
-      actor: userId,
+      actor: user.dbId,
       actorType: 'user',
       target: listing._id,
       targetModel: 'Listing',
@@ -56,9 +51,12 @@ export const POST = withAuth(async (req, user, context) => {
       metadata: { slug }
     })
 
-    return NextResponse.json({ waLink }, { status: 200 })
+    // 5. Generate Link
+    const waLink = `https://wa.me/91${seller.whatsappNumber}`
+
+    return NextResponse.json({ waLink })
   } catch (error) {
-    console.error('[/api/listings/[slug]/contact POST error]', error)
+    console.error('[/api/listings/contact POST error]', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 })

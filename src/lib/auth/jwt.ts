@@ -8,6 +8,7 @@ export interface JWTPayload {
   email: string
   role: 'user' | 'admin'
   displayName: string
+  dbId: string
 }
 
 // Access token — 15 minutes TTL

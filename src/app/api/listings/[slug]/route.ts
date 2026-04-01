@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db/connect'
 import Listing from '@/lib/db/models/Listing'
-import Category from '@/lib/db/models/Category'
 import User from '@/lib/db/models/User'
 import redis from '@/lib/redis/client'
+import { CACHE_KEYS, invalidateListing } from '@/lib/redis/cache'
+import { withAuth } from '@/lib/middleware/auth'
 
+/**
+ * GET /api/listings/[slug]
+ * Retrieves a single listing with caching and visibility checks.
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -12,38 +17,29 @@ export async function GET(
   try {
     const { slug } = await params
     
-    // Quick cache check to save DB hits for hot items
-    const cacheKey = `listing:detail:${slug}`
+    // 1. Cache Check
+    const cacheKey = CACHE_KEYS.LISTING(slug)
     const cachedData = await redis.get(cacheKey)
     if (cachedData) {
-      // Async view increment
       Listing.findOneAndUpdate({ slug }, { $inc: { views: 1 } }).exec()
       return NextResponse.json(cachedData)
     }
 
     await connectDB()
 
-    const listing = await Listing.findOne({ slug })
+    // 2. Fetch Listing
+    const listing = await Listing.findOne({ slug, isDeleted: false })
       .populate('category', 'name slug icon')
-      .populate('seller', 'displayName photoURL trustLevel createdAt +whatsappNumber') // Include +whatsappNumber for waLink gen
+      .populate('seller', 'displayName photoURL trustLevel createdAt +whatsappNumber')
       .lean() as any
 
     if (!listing) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
     }
 
-    // Construct WhatsApp deep link server-side — raw number is never sent to UI
-    if (listing.seller && listing.seller.whatsappNumber) {
-        const cleanNumber = listing.seller.whatsappNumber.replace(/\D/g, '')
-        listing.seller.waLink = `https://wa.me/${cleanNumber}?text=Hi, I am interested in your listing: ${listing.title} on UniDeal.`
-        delete listing.seller.whatsappNumber // Physically prune the number from payload
-    }
-
-    // MANDATORY 4-condition visibility filter applied retrospectively for direct access links
-    // If a listing has been banned or soft-deleted, direct links should be 404
+    // 3. Visibility Guard
     if (
       listing.status !== 'approved' ||
-      listing.isDeleted ||
       listing.sellerBanned ||
       listing.aiFlagged ||
       listing.isExpired
@@ -51,95 +47,82 @@ export async function GET(
       return NextResponse.json({ error: 'Listing unavailable' }, { status: 404 })
     }
 
-    // Cache the detail view for 30s
+    // 4. Cache Detail (30s)
     await redis.set(cacheKey, listing, { ex: 30 })
 
-    // Increment views in background
+    // 5. Track View
     Listing.findOneAndUpdate({ slug }, { $inc: { views: 1 } }).exec()
 
     return NextResponse.json(listing)
   } catch (error) {
-    console.error(`[/api/listings/[slug] GET error]`, error)
+    console.error(`[Listing Detail GET error]`, error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
 
-import { withAuth } from '@/lib/middleware/auth'
-
+/**
+ * PATCH /api/listings/[slug]
+ * Updates a listing (Ownership required).
+ */
 export const PATCH = withAuth(async (req, user, context) => {
   try {
-    if (!context) return NextResponse.json({ error: 'Missing context' }, { status: 400 })
-    const params = await context.params
-    const slug = params.slug
-
+    const { slug } = await context!.params
     await connectDB()
-    const dbUser = await User.findOne({ uid: user.uid })
-    if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const listing = await Listing.findOne({ slug })
     if (!listing) return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
 
-    // Ownership Check
-    if (listing.seller.toString() !== dbUser._id.toString()) {
-      return NextResponse.json({ error: 'Unauthorized to edit this listing' }, { status: 403 })
+    // Ownership Check (Using dbId from JWT)
+    if (listing.seller.toString() !== user.dbId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const body = await req.json()
-    // Simplified MVP edit logic (text fields only for stability)
-    if (body.title) listing.title = body.title
-    if (body.description) listing.description = body.description
-    if (body.price) listing.price = Number(body.price)
-    if (typeof body.negotiable === 'boolean') listing.negotiable = body.negotiable
-    if (body.condition) listing.condition = body.condition
+    const allowedUpdates = ['title', 'description', 'price', 'negotiable', 'condition']
+    
+    allowedUpdates.forEach(key => {
+      if (body[key] !== undefined) (listing as any)[key] = body[key]
+    })
 
-    // Re-verify if changed
+    // Re-verify on edit
     listing.status = 'pending'
     listing.aiFlagged = false
 
     await listing.save()
-
-    // Flush cache
-    await redis.del(`listing:detail:${slug}`)
-    // We should ideally scan and delete `feed:browse:*` keys, but for MVP standard expiry handles it
+    await invalidateListing(slug)
 
     return NextResponse.json({ success: true, slug: listing.slug })
   } catch (error) {
-    console.error('[/api/listings/[slug] PATCH error]', error)
+    console.error('[Listing Detail PATCH error]', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 })
 
+/**
+ * DELETE /api/listings/[slug]
+ * Soft-deletes a listing.
+ */
 export const DELETE = withAuth(async (req, user, context) => {
   try {
-    if (!context) return NextResponse.json({ error: 'Missing context' }, { status: 400 })
-    const params = await context.params
-    const slug = params.slug
-
+    const { slug } = await context!.params
     await connectDB()
-    const dbUser = await User.findOne({ uid: user.uid })
-    if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const listing = await Listing.findOne({ slug })
     if (!listing) return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
 
-    // Ownership Check
-    if (listing.seller.toString() !== dbUser._id.toString()) {
-      return NextResponse.json({ error: 'Unauthorized to delete this listing' }, { status: 403 })
+    if (listing.seller.toString() !== user.dbId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Soft delete
     listing.isDeleted = true
     await listing.save()
-
-    // Flush cache
-    await redis.del(`listing:detail:${slug}`)
-
-    // Update user stats
-    await User.findByIdAndUpdate(dbUser._id, { $inc: { activeListings: -1 } })
+    
+    await invalidateListing(slug)
+    await User.findByIdAndUpdate(user.dbId, { $inc: { activeListings: -1 } })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[/api/listings/[slug] DELETE error]', error)
+    console.error('[Listing Detail DELETE error]', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 })

@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
       email: user.email,
       role: user.role,
       displayName: user.displayName,
+      dbId: user._id.toString(),
     }
 
     // Issue both tokens

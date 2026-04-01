@@ -7,7 +7,7 @@ import { checkRateLimit } from '@/lib/middleware/rateLimit'
  * Next.js Edge Middleware for global rate limiting and auth routing.
  * IMPLEMENTS: Admin Rate Limiting (Fix 11).
  */
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // ── AUTHENTICATED SESSION CHECK (Banned User Protection) ─────────────────────

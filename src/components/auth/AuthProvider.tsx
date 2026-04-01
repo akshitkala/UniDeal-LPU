@@ -9,11 +9,13 @@ interface User {
   photoURL?: string
   role: 'user' | 'admin'
   isActive: boolean
+  dbId: string
 }
 
 interface AuthContextType {
   user: User | null
   loading: boolean
+  setUser: (user: User | null) => void
   refresh: () => Promise<void>
   logout: () => Promise<void>
 }
@@ -21,6 +23,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  setUser: () => {},
   refresh: async () => {},
   logout: async () => {},
 })
@@ -68,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, refresh: fetchUser, logout }}>
+    <AuthContext.Provider value={{ user, loading, setUser, refresh: fetchUser, logout }}>
       {children}
     </AuthContext.Provider>
   )
