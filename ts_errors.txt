@@ -1,0 +1,5 @@
+﻿src/app/api/contact/route.ts(43,7): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'isResolved' does not exist in type '{ name?: StringQueryTypeCasting | undefined; email?: StringQueryTypeCasting | undefined; subject?: StringQueryTypeCasting | undefined; ... 62 more ...; validateSync?: { ...; } | undefined; }'.
+src/app/api/contact/route.ts(49,69): error TS2339: Property '_id' does not exist on type 'never'.
+src/app/contact/page.tsx(4,25): error TS2307: Cannot find module '@/lib/auth/AuthContext' or its corresponding type declarations.
