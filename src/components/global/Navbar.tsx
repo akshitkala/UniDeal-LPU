@@ -11,6 +11,7 @@ export function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const { user, loading, logout } = useAuth()
@@ -25,37 +26,47 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 z-50">
-        <div className="max-w-[1280px] mx-auto px-4 h-full flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
           
           {/* Left: Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-[#2D9A54] rounded-lg flex items-center justify-center transform group-hover:rotate-12 transition-transform">
+          <Link href="/" className="flex items-center gap-2 group shrink-0 min-w-[44px] min-h-[44px]">
+            <div className="w-8 h-8 bg-[#2D9A54] rounded-lg flex items-center justify-center transform group-hover:rotate-12 transition-transform shadow-sm">
                <span className="text-white font-black text-xl">U</span>
             </div>
-            <span className="text-2xl font-black text-gray-900 tracking-tighter">UniDeal</span>
+            <span className="hidden sm:block text-2xl font-black text-gray-900 tracking-tighter">UniDeal</span>
           </Link>
-
+          
           {/* Center: Search Bar (Desktop) */}
-          <div className="hidden md:flex flex-1 max-w-[480px] px-8">
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
             <div className="relative w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
                 type="text" 
-                placeholder="Search laptops, books, cycles..."
+                placeholder="Search laptops, books..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearch}
-                className="w-full h-10 pl-11 pr-4 rounded-xl bg-[#F5F5F5] border-transparent focus:bg-white focus:border-[#2D9A54] focus:ring-4 focus:ring-[#2D9A54]/10 transition-all font-medium text-sm"
+                className="w-full h-10 pl-11 pr-4 rounded-full bg-gray-50 border-gray-100 focus:bg-white focus:border-[#2D9A54] transition-all font-medium text-sm"
               />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
           </div>
-
+          
+          {/* Mobile Search Toggle */}
+          <div className="flex md:hidden flex-1 justify-end items-center gap-1">
+             <button 
+               onClick={() => setIsSearchOpen(!isSearchOpen)}
+               className="w-11 h-11 flex items-center justify-center rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
+             >
+               {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+             </button>
+          </div>
+          
           {/* Right: Actions (Desktop) */}
           <div className="hidden md:flex items-center gap-6">
             <Link 
               href="/#how-it-works" 
-              className="text-sm font-bold text-gray-600 hover:text-[#2D9A54] transition-colors"
+              className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
             >
               How it works
             </Link>
@@ -125,14 +136,37 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Hamburger Toggle */}
           <button 
-            className="md:hidden p-2 text-gray-600 bg-gray-50 rounded-xl"
+            className="md:hidden w-11 h-11 flex items-center justify-center text-gray-600 bg-gray-50 rounded-xl hover:bg-gray-100"
             onClick={() => setIsMobileMenuOpen(true)}
           >
             <Menu className="w-6 h-6" />
           </button>
         </div>
+        
+        {/* Mobile Search Overlay Overlay */}
+        {isSearchOpen && (
+            <div className="absolute top-16 left-0 right-0 bg-white border-b border-gray-200 p-4 animate-in slide-in-from-top-4 duration-200 z-[49] md:hidden">
+                <div className="relative w-full flex items-center gap-2">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input 
+                        type="text" 
+                        autoFocus
+                        placeholder="Search laptops, books..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                handleSearch(e)
+                                setIsSearchOpen(false)
+                            }
+                        }}
+                        className="w-full h-12 pl-11 pr-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-[#2D9A54]/20 transition-all font-bold text-sm"
+                    />
+                </div>
+            </div>
+        )}
       </nav>
 
       {/* Mobile Drawer Overlay */}
@@ -171,7 +205,6 @@ export function Navbar() {
               <div className="flex flex-col gap-2">
                 <Link onClick={() => setIsMobileMenuOpen(false)} href="/" className="px-4 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors">Home</Link>
                 <Link onClick={() => setIsMobileMenuOpen(false)} href="/browse" className="px-4 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors">Browse Marketplace</Link>
-                <Link onClick={() => setIsMobileMenuOpen(false)} href="/categories" className="px-4 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors">Categories</Link>
                 {user?.role === 'admin' && (
                   <Link onClick={() => setIsMobileMenuOpen(false)} href="/admin" className="px-4 py-3 rounded-xl font-bold text-amber-700 bg-amber-50 transition-colors">Admin Console</Link>
                 )}

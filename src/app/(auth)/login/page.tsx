@@ -59,16 +59,16 @@ function LoginContent() {
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl" />
 
       {/* Login Card */}
-      <div className="relative z-10 w-full max-w-lg">
-        <div className="bg-white/80 backdrop-blur-2xl rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] border border-white p-10 md:p-14 flex flex-col items-center">
+      <div className="relative z-10 w-full max-w-lg animate-in fade-in zoom-in-95 duration-700">
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] sm:rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] border border-white p-6 sm:p-10 md:p-14 flex flex-col items-center">
           
           {/* Logo & Headline */}
           <div className="w-20 h-20 bg-emerald-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-emerald-600/30 mb-8 border-4 border-white">
              <div className="text-3xl font-black text-white italic">UD</div>
           </div>
           
-          <h1 className="text-4xl font-extrabold text-[#1A1A1A] tracking-tighter mb-2">Welcome Back!</h1>
-          <p className="text-gray-500 font-bold text-center mb-10 max-w-xs">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-950 tracking-tighter mb-2">Welcome Back!</h1>
+          <p className="text-gray-500 font-bold text-center mb-10 max-w-xs text-sm sm:text-base leading-relaxed">
             Sign in to access the campus <br /> marketplace.
           </p>
 

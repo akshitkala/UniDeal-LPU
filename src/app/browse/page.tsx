@@ -3,9 +3,10 @@
 import { useEffect, useState, Suspense, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Search, SlidersHorizontal, Loader2, ArrowLeft } from 'lucide-react'
+import { Search, SlidersHorizontal, Loader2, ArrowLeft, PackageCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ListingCard } from '@/components/listing/ListingCard'
+import { CategorySlider } from '@/components/listing/CategorySlider'
 
 interface Listing {
   _id: string
@@ -113,17 +114,16 @@ function BrowseContent() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 pb-32">
+      <CategorySlider />
+      
       {/* Header & Controls */}
       <div className="flex flex-col gap-8 mb-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="flex flex-col gap-2">
-            <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#2D9A54] font-bold hover:gap-3 transition-all mb-2">
-                <ArrowLeft className="w-4 h-4" /> All Branches
-            </Link>
-            <h1 className="text-4xl font-black text-gray-900 leading-none tracking-tight">
-                {q ? `Results for "${q}"` : category ? `Sector: ${category}` : 'Campus Feed'}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-950 leading-[0.9] tracking-tighter">
+                {q ? `Results for "${q}"` : 'Campus Directory'}
             </h1>
-            <p className="text-gray-500 font-medium">Found {listings.length}{nextCursor ? '+' : ''} listings</p>
+            <p className="text-gray-500 font-medium text-base sm:text-lg">Verified items from the community.</p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -238,7 +238,7 @@ function BrowseContent() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {listings.map((l) => (
               <ListingCard 
                 key={l._id} 

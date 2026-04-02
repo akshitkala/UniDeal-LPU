@@ -138,26 +138,26 @@ export default function ListingDetail() {
             )}
           </div>
 
-          <div className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-gray-100 shadow-sm">
-            <h3 className="text-2xl font-black text-gray-900 mb-8 flex items-center gap-3">
+          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 border border-gray-100 shadow-sm">
+            <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-6 sm:mb-8 flex items-center gap-3">
               Description
               <div className="h-px bg-gray-100 flex-1 ml-4" />
             </h3>
-            <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap font-medium">
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed whitespace-pre-wrap font-medium">
               {listing.description}
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12 pt-8 border-t border-gray-50">
-              <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100/50 flex flex-col gap-1">
-                 <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Ownership & Condition</span>
-                 <span className="text-xl font-black text-emerald-950 uppercase tracking-tight">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-50">
+              <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-emerald-100/50 flex flex-col gap-1">
+                 <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Ownership & Condition</span>
+                 <span className="text-lg sm:text-xl font-black text-emerald-950 uppercase tracking-tight">
                    {listing.condition.replace('-', ' ')}
                  </span>
               </div>
-              <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 flex flex-col gap-1">
-                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pick-up Location</span>
-                 <span className="text-xl font-black text-gray-900 flex items-center gap-2">
-                   <MapPin className="w-5 h-5 text-emerald-600" />
+              <div className="bg-gray-50 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 flex flex-col gap-1">
+                 <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pick-up Location</span>
+                 <span className="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-2">
+                   <MapPin className="w-4 h-4 sm:w-5 h-5 text-emerald-600" />
                    Campus
                  </span>
               </div>
@@ -181,16 +181,16 @@ export default function ListingDetail() {
                     </div>
                  </div>
 
-                 <h1 className="text-3xl font-black text-gray-950 leading-tight tracking-tight">
+                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-950 leading-tight tracking-tight">
                    {listing.title}
                  </h1>
 
                  <div className="flex items-baseline gap-3">
-                   <span className="text-5xl font-black text-emerald-600 tracking-tighter">
+                   <span className="text-4xl sm:text-5xl md:text-6xl font-black text-emerald-600 tracking-tighter">
                      ₹{listing.price.toLocaleString('en-IN')}
                    </span>
                    {listing.negotiable && (
-                     <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100 animate-pulse">
+                     <span className="text-[10px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100">
                         Negotiable
                      </span>
                    )}
@@ -215,7 +215,9 @@ export default function ListingDetail() {
                    </div>
                  </div>
 
-                 <ContactButton slug={listing.slug} sellerId={listing.seller?._id} />
+                 <div className="hidden lg:block">
+                   <ContactButton slug={listing.slug} sellerId={listing.seller?._id} />
+                 </div>
                </div>
             </div>
 
@@ -260,6 +262,11 @@ export default function ListingDetail() {
         isOpen={isReportModalOpen} 
         onClose={() => setIsReportModalOpen(false)} 
       />
+ 
+      {/* Mobile Fixed Contact Bar */}
+      <div className="lg:hidden fixed bottom-16 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 z-40 animate-in slide-in-from-bottom duration-500 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <ContactButton slug={listing.slug} sellerId={listing.seller?._id} />
+      </div>
     </div>
   )
 }

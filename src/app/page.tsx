@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ListingCard } from '@/components/listing/ListingCard'
+import { CategorySlider } from '@/components/listing/CategorySlider'
 
 // Types
 interface Listing {
@@ -101,6 +102,8 @@ export default function Home() {
         </div>
       </section>
 
+      <CategorySlider />
+
       {/* Features: Value Signal */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
@@ -142,14 +145,14 @@ export default function Home() {
       <section className="flex flex-col gap-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div className="flex flex-col gap-2">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-950 tracking-tighter leading-tight flex items-center gap-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-950 tracking-tighter leading-none flex items-center gap-4">
               Fresh Deals
               <span className="hidden md:flex relative h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
               </span>
             </h2>
-            <p className="text-gray-500 font-medium text-lg">Verified items from the LPU community.</p>
+            <p className="text-gray-500 font-medium text-lg leading-tight">Verified items from the LPU community.</p>
           </div>
           
           <div className="flex items-center gap-2 p-1.5 bg-gray-100 rounded-2xl self-start">

@@ -21,7 +21,6 @@ export function Footer() {
             <h3 className="font-semibold text-lg mb-2">Platform</h3>
             <Link href="/" className="text-gray-400 hover:text-white transition-colors text-sm">Browse Listings</Link>
             <Link href="/post" className="text-gray-400 hover:text-white transition-colors text-sm">List an Item</Link>
-            <Link href="/categories" className="text-gray-400 hover:text-white transition-colors text-sm">All Categories</Link>
             <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors text-sm">My Dashboard</Link>
           </div>
 

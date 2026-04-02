@@ -57,7 +57,7 @@ export default function AdminOverview() {
             <div className="h-12 w-96 bg-gray-100 rounded-2xl" />
             <div className="h-6 w-1/2 bg-gray-100 rounded-xl" />
          </div>
-         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {[...Array(4)].map((_, i) => <div key={i} className="h-44 bg-gray-50 rounded-[2.5rem] border border-gray-100 animate-pulse" />)}
          </div>
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -110,32 +110,32 @@ export default function AdminOverview() {
   )
 
   return (
-    <div className="flex flex-col gap-16 py-12 px-6 max-w-[1440px] mx-auto mb-24 overflow-hidden">
+    <div className="flex flex-col gap-10 sm:gap-16 py-6 sm:py-12 px-4 sm:px-6 max-w-[1440px] mx-auto mb-24 overflow-hidden">
       
       {/* Neural Header */}
       <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 relative">
-        <div className="flex flex-col gap-4 relative z-10">
+        <div className="flex flex-col gap-3 sm:gap-4 relative z-10">
             <div className="flex items-center gap-3 px-4 py-1.5 bg-gray-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] w-fit shadow-xl">
                 <BrainCircuit className="w-4 h-4 text-emerald-400 animate-pulse" /> Neural Strategy Engine v2.0
             </div>
-            <h1 className="text-6xl md:text-8xl font-black text-gray-900 tracking-tighter leading-[0.85]">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-black text-gray-950 tracking-tighter leading-[0.8] mb-2 sm:mb-0">
                 Guardian <br /> <span className="text-emerald-600">Command.</span>
             </h1>
-            <p className="text-gray-500 font-medium text-xl max-w-xl leading-relaxed">
+            <p className="text-gray-500 font-medium text-lg sm:text-xl max-w-xl leading-snug">
                 Platform-wide intelligence and high-priority tactical interventions.
             </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6 relative z-10 mb-2">
-            <div className="px-8 py-6 bg-white border border-gray-100 rounded-[2.5rem] shadow-premium flex flex-col gap-2 min-w-[200px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 relative z-10 mb-2">
+            <div className="px-6 sm:px-8 py-5 sm:py-6 bg-white border border-gray-100 rounded-[2rem] sm:rounded-[2.5rem] shadow-premium flex flex-col gap-2 min-w-[200px]">
                 <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Network Status</span>
-                <div className="flex items-center gap-2 font-black text-gray-900">
+                <div className="flex items-center gap-2 font-black text-gray-950 text-sm sm:text-base">
                     <Radio className="w-4 h-4 text-emerald-500 animate-ping" /> GLOBAL SYNCHRONIZED
                 </div>
             </div>
-            <div className="px-8 py-6 bg-white border border-gray-100 rounded-[2.5rem] shadow-premium flex flex-col gap-2 min-w-[200px]">
+            <div className="px-6 sm:px-8 py-5 sm:py-6 bg-white border border-gray-100 rounded-[2rem] sm:rounded-[2.5rem] shadow-premium flex flex-col gap-2 min-w-[200px]">
                 <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Security Protocol</span>
-                <div className="flex items-center gap-2 font-black text-blue-600">
+                <div className="flex items-center gap-2 font-black text-blue-600 text-sm sm:text-base">
                     <ShieldCheck className="w-4 h-4" /> AI-ENHANCED AUDIT
                 </div>
             </div>
@@ -159,14 +159,14 @@ export default function AdminOverview() {
             </h3>
             <p className="text-slate-400 font-medium max-w-lg">Configures the global listing ingestion policy. Manual review vs AI-assisted filtering.</p>
          </div>
-         <div className="flex items-center gap-3 p-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] relative z-10 shrink-0">
-            <button className="px-10 py-5 rounded-[1.5rem] bg-white text-gray-900 font-black text-xs uppercase tracking-widest shadow-xl flex items-center gap-2 transition-all active:scale-95">
+          <div className="flex items-center gap-3 p-1.5 sm:p-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] relative z-10 shrink-0">
+            <button className="flex-1 sm:px-10 py-4 sm:py-5 rounded-[1rem] sm:rounded-[1.5rem] bg-white text-gray-900 font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
                 <Zap className="w-4 h-4 text-emerald-500" /> AI Filtering Active
             </button>
-            <button className="px-10 py-5 rounded-[1.5rem] text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest transition-all">
+            <button className="flex-1 sm:px-10 py-4 sm:py-5 rounded-[1rem] sm:rounded-[1.5rem] text-slate-400 hover:text-white font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all">
                 Manual Override
             </button>
-         </div>
+          </div>
       </nav>
 
       {/* Operation Centers */}
@@ -234,12 +234,12 @@ export default function AdminOverview() {
                         </div>
                      </div>
 
-                     <Link 
-                       href={`/admin/queue`} 
-                       className="h-16 px-10 bg-gray-900 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center group/btn shadow-xl"
-                     >
-                       Investigate <Eye className="ml-3 w-4 h-4 group-hover/btn:scale-125 transition-transform" />
-                     </Link>
+                      <Link 
+                        href={`/admin/queue`} 
+                        className="w-full sm:w-auto h-14 sm:h-16 px-8 sm:px-10 bg-gray-900 text-white rounded-[1.2rem] sm:rounded-[1.5rem] font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center group/btn shadow-xl"
+                      >
+                        Investigate <Eye className="ml-3 w-4 h-4 group-hover/btn:scale-125 transition-transform" />
+                      </Link>
                    </div>
                  ))}
                </div>

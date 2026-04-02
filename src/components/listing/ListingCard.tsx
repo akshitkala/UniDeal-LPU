@@ -62,13 +62,13 @@ export function ListingCard({ listing, showSeller = true, actions }: ListingCard
       {/* Content Cluster: Informational Signal */}
       <div className="p-4 flex flex-col justify-between flex-1 relative z-10">
         <div className="mb-4">
-          <h3 className="text-[14px] leading-tight font-bold text-gray-900 line-clamp-2 mb-1.5 group-hover:text-[#2D9A54] transition-colors uppercase tracking-tight">
+          <h3 className="text-xs sm:text-sm md:text-base leading-tight font-bold text-gray-900 line-clamp-2 mb-1.5 group-hover:text-[#2D9A54] transition-colors uppercase tracking-tight">
             {listing.title}
           </h3>
-          <div className="flex items-center gap-3">
-            <span className="text-[17px] font-black text-gray-900 tracking-tighter">₹{listing.price.toLocaleString('en-IN')}</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-base sm:text-lg md:text-xl font-black text-gray-900 tracking-tighter">₹{listing.price.toLocaleString('en-IN')}</span>
             {listing.negotiable && (
-              <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-md border border-emerald-100 uppercase tracking-tighter">
+              <span className="text-[8px] sm:text-[10px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-md border border-emerald-100 uppercase tracking-tighter">
                 Neg
               </span>
             )}

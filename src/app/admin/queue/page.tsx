@@ -105,35 +105,37 @@ export default function ModerationQueue() {
     <div className="flex flex-col gap-10 max-w-[1440px] mx-auto mb-24 px-6 md:px-12">
       
       {/* Header */}
-      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pt-8">
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 pt-8 px-0 sm:px-0">
         <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-indigo-100 w-fit">
                 <BrainCircuit className="w-3.5 h-3.5" /> Moderation Engine v3.1
             </div>
-            <h1 className="text-5xl font-black text-gray-900 tracking-tighter leading-none">Moderation Queue</h1>
-            <p className="text-gray-500 font-medium text-lg max-w-2xl">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-950 tracking-tighter leading-none">Moderation Queue</h1>
+            <p className="text-gray-500 font-medium text-base sm:text-lg max-w-2xl">
                 Manual oversight of campus deals. AI handles 95% of traffic; you handle the edge cases.
             </p>
         </div>
 
-        <div className="flex items-center gap-2 p-1.5 bg-gray-100/50 backdrop-blur-md border border-gray-200 rounded-[2rem]">
-            {[
-                { id: 'pending', label: 'Human Review', icon: Clock, color: 'text-amber-600' },
-                { id: 'flagged', label: 'AI Blocked', icon: BadgeAlert, color: 'text-rose-600' },
-                { id: 'live', label: 'Active Feed', icon: ShieldCheck, color: 'text-emerald-600' }
-            ].map(tab => (
-                <button 
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabState)}
-                  className={cn(
-                    "px-6 py-3 rounded-[1.5rem] font-black text-xs transition-all flex items-center gap-2",
-                    activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
-                  )}
-                >
-                    <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? tab.color : "text-gray-300")} />
-                    {tab.label}
-                </button>
-            ))}
+        <div className="w-full overflow-x-auto scrollbar-none -mx-2 px-2 sm:mx-0 sm:px-0">
+            <div className="flex items-center gap-1 p-1.5 bg-gray-100/50 backdrop-blur-md border border-gray-200 rounded-2xl w-fit min-w-full sm:min-w-0">
+                {[
+                    { id: 'pending', label: 'Human Review', icon: Clock, color: 'text-amber-600' },
+                    { id: 'flagged', label: 'AI Blocked', icon: BadgeAlert, color: 'text-rose-600' },
+                    { id: 'live', label: 'Active Feed', icon: ShieldCheck, color: 'text-emerald-600' }
+                ].map(tab => (
+                    <button 
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as TabState)}
+                      className={cn(
+                        "relative flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-black text-[10px] sm:text-xs transition-all flex items-center justify-center gap-2",
+                        activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
+                      )}
+                    >
+                        <tab.icon className={cn("w-3.5 h-3.5 sm:w-4 h-4", activeTab === tab.id ? tab.color : "text-gray-300")} />
+                        <span className="whitespace-nowrap">{tab.label}</span>
+                    </button>
+                ))}
+            </div>
         </div>
       </header>
 
@@ -163,9 +165,9 @@ export default function ModerationQueue() {
             <table className="w-full text-left text-sm text-gray-600">
               <thead className="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                 <tr>
-                  <th className="px-8 py-6">Item Details</th>
-                  <th className="px-8 py-6">Seller Information</th>
-                  <th className="px-8 py-6 text-right">Actions</th>
+                  <th className="px-4 sm:px-8 py-6 min-w-[300px]">Item Details</th>
+                  <th className="px-4 sm:px-8 py-6 min-w-[200px]">Seller Information</th>
+                  <th className="px-4 sm:px-8 py-6 text-right min-w-[150px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -175,9 +177,9 @@ export default function ModerationQueue() {
                     list.aiFlagged ? "bg-rose-50/20 hover:bg-rose-50/40" : "hover:bg-gray-50/50"
                   )}>
                     
-                    <td className="px-8 py-8">
-                      <div className="flex items-start gap-6">
-                        <div className="relative w-32 h-32 bg-gray-50 rounded-[2rem] overflow-hidden flex-shrink-0 border-4 border-white shadow-xl">
+                    <td className="px-4 sm:px-8 py-6 sm:py-8">
+                      <div className="flex items-start gap-4 sm:gap-6">
+                        <div className="relative w-20 h-20 sm:w-32 sm:h-32 bg-gray-50 rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden flex-shrink-0 border-4 border-white shadow-xl">
                            {list.images?.[0] ? (
                              <img src={list.images[0]} alt="tb" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
                            ) : (
@@ -221,7 +223,7 @@ export default function ModerationQueue() {
                       </div>
                     </td>
 
-                    <td className="px-8 py-8">
+                    <td className="px-4 sm:px-8 py-6 sm:py-8">
                       <div className="flex flex-col gap-2">
                          <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center font-black text-gray-400 text-sm border border-white shadow-sm">
@@ -251,29 +253,29 @@ export default function ModerationQueue() {
                       </div>
                     </td>
 
-                    <td className="px-8 py-8">
-                       <div className="flex items-center justify-end gap-3">
+                    <td className="px-4 sm:px-8 py-6 sm:py-8">
+                       <div className="flex items-center justify-end gap-2 sm:gap-3">
                           {activeTab !== 'live' && (
                              <button 
                                 onClick={() => setModalConfig({ isOpen: true, type: 'approve', slug: list.slug, title: list.title })}
-                                className="h-14 px-6 bg-emerald-600 text-white rounded-2xl font-black text-xs flex items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                                className="h-12 sm:h-14 px-4 sm:px-6 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs flex items-center gap-2 hover:bg-emerald-700 shadow-lg"
                              >
                                 <CheckCircle className="w-4 h-4"/> Approve
                              </button>
                           )}
                           <button 
                              onClick={() => setModalConfig({ isOpen: true, type: 'reject', slug: list.slug, title: list.title })}
-                             className="h-14 w-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center hover:bg-amber-100 active:scale-95 transition-all"
+                             className="h-12 w-12 sm:h-14 sm:w-14 bg-amber-50 text-amber-600 rounded-xl sm:rounded-2xl flex items-center justify-center hover:bg-amber-100"
                              title="Reject (Return to Seller)"
                           >
-                             <Ban className="w-5 h-5"/>
+                             <Ban className="w-4 h-4 sm:w-5 h-5"/>
                           </button>
                           <button 
                              onClick={() => setModalConfig({ isOpen: true, type: 'delete', slug: list.slug, title: list.title })}
-                             className="h-14 w-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center hover:bg-rose-100 active:scale-95 transition-all"
+                             className="h-12 w-12 sm:h-14 sm:w-14 bg-rose-50 text-rose-600 rounded-xl sm:rounded-2xl flex items-center justify-center hover:bg-rose-100"
                              title="Destroy Listing"
                           >
-                             <Trash2 className="w-5 h-5"/>
+                             <Trash2 className="w-4 h-4 sm:w-5 h-5"/>
                           </button>
                        </div>
                     </td>

@@ -25,10 +25,10 @@ export default function RootLayout({
       {/* 
         Add SEO semantic tags and min-h-screen to ensure footer sticks to the bottom
       */}
-      <body className={`${inter.className} min-h-screen flex flex-col bg-[#FFFFFF] text-[#1A1A1A] antialiased pt-16 pb-16 md:pb-0`}>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-white text-gray-950 antialiased pt-16 pb-16 md:pb-0`}>
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 w-full max-w-[1280px] mx-auto pt-6 px-4 md:px-6">
+          <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
             {children}
           </main>
           <MobileTabBar />

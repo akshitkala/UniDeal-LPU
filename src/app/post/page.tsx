@@ -140,7 +140,7 @@ export default function PostListing() {
 
       if (!res.ok) throw new Error(data.error || 'Publishing fault')
 
-      router.push(`/listing/${data.slug}`)
+      router.push('/dashboard')
     } catch (err: any) {
       setError(err.message)
       setLoading(false)

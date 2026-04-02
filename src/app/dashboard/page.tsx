@@ -108,38 +108,40 @@ export default function Dashboard() {
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 mb-2 w-fit">
                 <TrendingUp className="w-3 h-3" /> Marketplace
             </div>
-            <h1 className="text-5xl font-black text-gray-900 tracking-tighter leading-none mb-1">My Dashboard</h1>
-            <p className="text-gray-500 font-medium text-lg">Manage your campus listings and interactions.</p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-950 tracking-tighter leading-none mb-1">My Dashboard</h1>
+            <p className="text-gray-500 font-medium text-base sm:text-lg">Manage your campus listings and interactions.</p>
         </div>
 
         <Link 
           href="/post" 
-          className="h-16 px-10 bg-[#2D9A54] hover:bg-[#258246] text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-[#2D9A54]/20"
+          className="h-14 sm:h-16 px-8 sm:px-10 bg-[#2D9A54] hover:bg-[#258246] text-white rounded-2xl font-black text-base sm:text-lg flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-[#2D9A54]/20"
         >
           <PlusCircle className="w-6 h-6" /> Sell Another Item
         </Link>
       </header>
 
       {/* Persistence Tabs */}
-      <div className="flex items-center gap-1 p-1.5 bg-gray-50 border border-gray-100 rounded-2xl w-fit">
-        {[
-          { id: 'active', label: 'Live', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-[#2D9A54]' },
-          { id: 'pending', label: 'Review', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-500' },
-          { id: 'blocked', label: 'Blocked', icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-500' }
-        ].map((tab) => (
-            <button 
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabState)}
-                className={cn(
-                    "relative px-6 py-3 rounded-xl font-black text-sm transition-all flex items-center gap-2",
-                    activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
-                )}
-            >
-                <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? tab.color : "text-gray-300")} />
-                {tab.label}
-                {activeTab === tab.id && <span className={cn("absolute -top-1 -right-1 w-2 h-2 rounded-full", tab.bg)} />}
-            </button>
-        ))}
+      <div className="w-full overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="flex items-center gap-1 p-1.5 bg-gray-50 border border-gray-100 rounded-2xl w-fit min-w-full sm:min-w-0">
+          {[
+            { id: 'active', label: 'Live', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-[#2D9A54]' },
+            { id: 'pending', label: 'Review', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-500' },
+            { id: 'blocked', label: 'Blocked', icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-500' }
+          ].map((tab) => (
+              <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as TabState)}
+                  className={cn(
+                      "relative flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2",
+                      activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
+                  )}
+              >
+                  <tab.icon className={cn("w-3.5 h-3.5 sm:w-4 h-4", activeTab === tab.id ? tab.color : "text-gray-300")} />
+                  {tab.label}
+                  {activeTab === tab.id && <span className={cn("absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full", tab.bg)} />}
+              </button>
+          ))}
+        </div>
       </div>
 
       {error && (
@@ -155,7 +157,7 @@ export default function Dashboard() {
       )}
 
       {/* Grid Architecture */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
         {loading ? (
           <>
             {[1,2,3,4].map(i => (
