@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { Avatar } from '@/components/ui/Avatar'
 
 interface PublicProfileData {
   seller: {
@@ -107,11 +108,11 @@ export default function PublicProfilePage() {
             <div className="relative flex-shrink-0 group">
                 <div className="absolute inset-0 bg-emerald-500/20 blur-2xl group-hover:blur-3xl transition-all opacity-0 group-hover:opacity-100 duration-700" />
                 <div className="relative w-40 h-40 md:w-56 md:h-56 rounded-[4rem] overflow-hidden border-8 border-white shadow-2xl-soft ring-1 ring-gray-100">
-                    <Image 
-                        src={seller.photoURL || 'https://www.gravatar.com/avatar/0?d=mp'} 
-                        fill 
-                        alt={seller.displayName}
-                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                    <Avatar 
+                        src={seller.photoURL} 
+                        name={seller.displayName}
+                        size="xl"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                 </div>
             </div>
@@ -175,7 +176,7 @@ export default function PublicProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
              {listings.map(l => (
                 <Link 
-                   key={l.slug} 
+                   key={l._id} 
                    href={`/listing/${l.slug}`}
                    className="group block"
                 >
@@ -186,6 +187,7 @@ export default function PublicProfilePage() {
                         fill 
                         alt={l.title}
                         className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         />
                         {/* Status Overlay */}
                         <div className="absolute top-4 left-4">

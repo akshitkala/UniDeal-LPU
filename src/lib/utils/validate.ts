@@ -65,7 +65,7 @@ export const contactSchema = z.object({
     .max(80)
     .transform(s => sanitizeText(s)),
   email: z.string().email('Invalid email address'),
-  subject: z.enum(['bug_report', 'ban_appeal', 'listing_dispute', 'general', 'other']),
+  subject: z.enum(['bug_report', 'ban_appeal', 'listing_dispute', 'general', 'complaint', 'other']),
   message: z.string()
     .min(10, 'Message is too short')
     .max(1000, 'Message is too long')

@@ -155,11 +155,11 @@ export default function AdminReportsPage() {
                         fill 
                         alt="listing preview" 
                         className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        sizes="(max-width: 768px) 100vw, 224px"
                         />
                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors pointer-events-none" />
                         <Link 
                             href={`/listing/${report.listing?.slug}`} 
-                            target="_blank"
                             className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                         >
                             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-2xl">

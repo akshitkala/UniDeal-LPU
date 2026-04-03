@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Activity, ShieldCheck, Loader2, Database, AlertTriangle } from 'lucide-react'
 import { Banner } from '@/components/global/Banner'
 import { formatDistanceToNow } from 'date-fns'
+import { Avatar } from '@/components/ui/Avatar'
 
 export default function AuditLog() {
   const [logs, setLogs] = useState<any[]>([])
@@ -79,7 +80,12 @@ export default function AuditLog() {
                       </td>
 
                       <td className="p-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
+                           <Avatar 
+                             src={log.actor?.photoURL} 
+                             name={log.actorType === 'deleted_user' ? 'System' : (log.actor?.displayName || 'System')}
+                             size="sm"
+                           />
                            <div className="flex flex-col">
                              {log.actorType === 'deleted_user' ? (
                                 <span className="font-bold text-gray-900">System (User Triggered)</span>

@@ -24,12 +24,19 @@ export const GET = withAdmin(async () => {
 
 export const POST = withAdmin(async (req) => {
   try {
-    const { name, slug, icon } = await req.json()
-    if (!name || !slug || !icon) return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
+    let { name, slug, icon } = await req.json()
+    if (!name) return NextResponse.json({ error: 'Missing Category Name' }, { status: 400 })
+
+    if (!slug) {
+      slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+    }
+    if (!icon) {
+      icon = 'Package'
+    }
 
     await connectDB()
     const existing = await Category.findOne({ slug })
-    if (existing) return NextResponse.json({ error: 'Category slug already mapped' }, { status: 400 })
+    if (existing) return NextResponse.json({ error: `Category slug '${slug}' already exists` }, { status: 400 })
 
     const category = await Category.create({ name, slug, icon })
     

@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db/connect'
 import Listing from '@/lib/db/models/Listing'
 import Category from '@/lib/db/models/Category'
 import User from '@/lib/db/models/User'
+import SystemConfig from '@/lib/db/models/SystemConfig'
 import redis from '@/lib/redis/client'
 import { CACHE_KEYS, invalidateFeed } from '@/lib/redis/cache'
 import { withAuth } from '@/lib/middleware/auth'
@@ -58,27 +59,36 @@ export async function GET(req: NextRequest) {
     }
     if (q) filter.$text = { $search: q }
 
-    // ── CURSOR: use bumpedAt + _id for stable O(log n) sort ─────────────────
+    // ── HEADCOUNT: Calculate total matching docs (Fix 5) ───────────────────
+    const total = await Listing.countDocuments(filter)
+
+    // ── CURSOR: use _id for stable pagination (Fix 6) ───────────────────
     if (cursor) {
       try {
-        const { bumpedAt, _id } = JSON.parse(Buffer.from(cursor, 'base64').toString('utf8'))
-        filter.$or = [
-          { bumpedAt: { $lt: new Date(bumpedAt) } },
-          { bumpedAt: new Date(bumpedAt), _id: { $lt: _id } },
-        ]
+        filter._id = { $lt: cursor }
       } catch (e) {
-        return NextResponse.json({ error: 'Invalid cursor format' }, { status: 400 })
+        // Invalid cursor — ignore and return first page
       }
     }
 
-    // 3. Execution
-    const listings = await Listing.find(filter)
+    // 3. Execution (Fix: Search Relevance Sort)
+    let query = Listing.find(filter)
       .select('title price images condition category slug bumpedAt createdAt seller negotiable')
-      .sort({ bumpedAt: -1, _id: -1 })
-      .limit(limit + 1) // check for next page
+      .limit(limit + 1)
       .populate('category', 'name slug icon')
       .populate('seller', 'displayName photoURL isLpuVerified')
       .lean()
+
+    if (q) {
+      // Add text score projection and sort by relevance when searching
+      query = (query as any).select({ score: { $meta: 'textScore' } })
+        .sort({ score: { $meta: 'textScore' } })
+    } else {
+      // Normal sort by bump/date when not searching
+      query = (query as any).sort({ bumpedAt: -1, _id: -1 })
+    }
+
+    const listings = await query
 
     const hasNext = listings.length > limit
     const data = hasNext ? listings.slice(0, -1) : listings
@@ -86,14 +96,10 @@ export async function GET(req: NextRequest) {
     // Construct Next Cursor
     let nextCursor = null
     if (hasNext && data.length > 0) {
-      const lastItem = data[data.length - 1]
-      nextCursor = Buffer.from(JSON.stringify({
-        bumpedAt: lastItem.bumpedAt,
-        _id: lastItem._id
-      })).toString('base64')
+      nextCursor = data[data.length - 1]._id.toString()
     }
 
-    return NextResponse.json({ listings: data, nextCursor })
+    return NextResponse.json({ listings: data, nextCursor, total })
   } catch (error) {
     console.error('[/api/listings GET error]', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
@@ -195,31 +201,48 @@ export const POST = withAuth(async (req, user) => {
     await newListing.save()
     await invalidateFeed()
 
-    // 6. Fire-and-forget AI Check (Fix 7)
-    checkListingAI(
-      parsedData.data.title,
-      parsedData.data.description,
-      parsedData.data.price,
-      validCategory.name
-    ).then(async (aiCheck) => {
-      // Update flags & auto-approve if clean
-      const updateData: any = {
-        aiFlagged: aiCheck.aiFlagged,
-        aiUnavailable: aiCheck.aiUnavailable,
+    // 6. Fire-and-forget AI Check (Fix 7) & Policy Enforcement
+    const checkAI = async () => {
+      try {
+        const [aiCheck, config] = await Promise.all([
+          checkListingAI(parsedData.data.title, parsedData.data.description, parsedData.data.price, validCategory.name),
+          SystemConfig.findOne({})
+        ])
+
+        const mode = config?.approvalMode || 'ai_flagging'
+        
+        let shouldApprove = false
+        if (mode === 'automatic') {
+          shouldApprove = true
+        } else if (mode === 'ai_flagging' && !aiCheck.aiFlagged && !aiCheck.aiUnavailable) {
+          shouldApprove = true
+        }
+
+        const updateData: any = {
+          aiFlagged: aiCheck.aiFlagged,
+          aiUnavailable: aiCheck.aiUnavailable,
+          aiVerification: {
+             reason: aiCheck.reason,
+             confidence: aiCheck.confidence
+          }
+        }
+
+        if (shouldApprove) {
+          updateData.status = 'approved'
+          await invalidateFeed()
+        }
+
+        await Listing.findByIdAndUpdate(newListing._id, updateData)
+      } catch (err) {
+        console.error('[AI Post-Save Error]', err)
+        await Listing.findByIdAndUpdate(newListing._id, {
+          aiFlagged: true,
+          aiUnavailable: true
+        })
       }
-      if (!aiCheck.aiFlagged && !aiCheck.aiUnavailable) {
-        updateData.status = 'approved'
-        // Flush cache for this category
-        await redis.del(`feed:browse:1:12:${validCategory._id || 'all'}:newest:none`)
-      }
-      await Listing.findByIdAndUpdate(newListing._id, updateData)
-    }).catch(async (err) => {
-      console.error('[AI Post-Save Error]', err)
-      await Listing.findByIdAndUpdate(newListing._id, {
-        aiFlagged: true,
-        aiUnavailable: true
-      })
-    })
+    }
+
+    checkAI()
 
     return NextResponse.json({ slug: finalSlug }, { status: 201 })
   } catch (error) {

@@ -17,7 +17,7 @@ import {
   TrendingUp,
   Inbox
 } from 'lucide-react'
-import { ConfirmModal } from '@/components/admin/ConfirmModal'
+import { ConfirmModal } from '@/components/global/ConfirmModal'
 import { cn } from '@/lib/utils'
 import { ListingCard } from '@/components/listing/ListingCard'
 
@@ -185,7 +185,7 @@ export default function Dashboard() {
 
             return (
               <ListingCard 
-                key={item.slug} 
+                key={item._id} 
                 listing={item} 
                 showSeller={false}
                 actions={

@@ -25,14 +25,21 @@ import {
   ChevronRight,
   Mail
 } from 'lucide-react'
-import { ConfirmModal } from '@/components/admin/ConfirmModal'
+import { ConfirmModal } from '@/components/global/ConfirmModal'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
+import { Avatar } from '@/components/ui/Avatar'
+import Image from 'next/image'
 
 type TabState = 'pending' | 'flagged' | 'live'
 
 export default function ModerationQueue() {
-  const [activeTab, setActiveTab] = useState<TabState>('pending')
+  const [status, setStatus] = useState<string>('pending')
+  const [aiFlag, setAiFlag] = useState<string>('all')
+  const [sort, setSort] = useState<string>('newest')
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
   const [loading, setLoading] = useState(true)
   const [listings, setListings] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -47,10 +54,21 @@ export default function ModerationQueue() {
   const [reasonInput, setReasonInput] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
 
-  const fetchQueue = async (tab: TabState) => {
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const fetchQueue = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/listings?status=${tab}`)
+      const params = new URLSearchParams({
+        status,
+        aiFlag,
+        sort,
+        q: debouncedSearch
+      })
+      const res = await fetch(`/api/admin/listings?${params.toString()}`)
       const data = await res.json()
       if (res.ok) {
         setListings(data.listings)
@@ -64,8 +82,8 @@ export default function ModerationQueue() {
   }
 
   useEffect(() => {
-    fetchQueue(activeTab)
-  }, [activeTab])
+    fetchQueue()
+  }, [status, aiFlag, sort, debouncedSearch])
 
   const handleAction = async () => {
     if (!modalConfig.slug) return
@@ -90,7 +108,7 @@ export default function ModerationQueue() {
          setModalConfig({ isOpen: false, type: 'approve', slug: null, title: '' })
          setReasonInput('')
          setError(null)
-         fetchQueue(activeTab)
+         fetchQueue()
       } else {
          setError(data.error || 'Directives rejected by server.')
       }
@@ -116,25 +134,53 @@ export default function ModerationQueue() {
             </p>
         </div>
 
-        <div className="w-full overflow-x-auto scrollbar-none -mx-2 px-2 sm:mx-0 sm:px-0">
-            <div className="flex items-center gap-1 p-1.5 bg-gray-100/50 backdrop-blur-md border border-gray-200 rounded-2xl w-fit min-w-full sm:min-w-0">
-                {[
-                    { id: 'pending', label: 'Human Review', icon: Clock, color: 'text-amber-600' },
-                    { id: 'flagged', label: 'AI Blocked', icon: BadgeAlert, color: 'text-rose-600' },
-                    { id: 'live', label: 'Active Feed', icon: ShieldCheck, color: 'text-emerald-600' }
-                ].map(tab => (
-                    <button 
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as TabState)}
-                      className={cn(
-                        "relative flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-black text-[10px] sm:text-xs transition-all flex items-center justify-center gap-2",
-                        activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
-                      )}
-                    >
-                        <tab.icon className={cn("w-3.5 h-3.5 sm:w-4 h-4", activeTab === tab.id ? tab.color : "text-gray-300")} />
-                        <span className="whitespace-nowrap">{tab.label}</span>
-                    </button>
-                ))}
+        <div className="flex flex-col lg:flex-row lg:items-center gap-6 mt-6">
+            <div className="flex-1 relative group">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
+                <input 
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by Title, ID, or Seller..."
+                    className="w-full h-16 pl-14 pr-6 bg-white border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-300 font-bold text-gray-900 transition-all shadow-sm placeholder:text-gray-300"
+                />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
+                <select 
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="h-16 px-6 bg-white border border-gray-100 rounded-2xl outline-none font-bold text-sm text-gray-900 shadow-sm focus:border-indigo-300"
+                >
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="sold">Sold</option>
+                    <option value="expired">Expired</option>
+                </select>
+
+                <select 
+                    value={aiFlag}
+                    onChange={(e) => setAiFlag(e.target.value)}
+                    className="h-16 px-6 bg-white border border-gray-100 rounded-2xl outline-none font-bold text-sm text-gray-900 shadow-sm focus:border-indigo-300"
+                >
+                    <option value="all">AI: All</option>
+                    <option value="flagged">AI Flagged</option>
+                    <option value="no">Not Flagged</option>
+                    <option value="unavailable">AI Unavailable</option>
+                </select>
+
+                <select 
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                    className="h-16 px-6 bg-white border border-gray-100 rounded-2xl outline-none font-bold text-sm text-gray-900 shadow-sm focus:border-indigo-300"
+                >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="price_low">Price: Low to High</option>
+                </select>
             </div>
         </div>
       </header>
@@ -172,7 +218,7 @@ export default function ModerationQueue() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {listings.map((list) => (
-                  <tr key={list.slug} className={cn(
+                  <tr key={list._id} className={cn(
                     "group transition-all duration-300",
                     list.aiFlagged ? "bg-rose-50/20 hover:bg-rose-50/40" : "hover:bg-gray-50/50"
                   )}>
@@ -181,14 +227,20 @@ export default function ModerationQueue() {
                       <div className="flex items-start gap-4 sm:gap-6">
                         <div className="relative w-20 h-20 sm:w-32 sm:h-32 bg-gray-50 rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden flex-shrink-0 border-4 border-white shadow-xl">
                            {list.images?.[0] ? (
-                             <img src={list.images[0]} alt="tb" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+                             <Image 
+                               src={list.images[0]} 
+                               fill 
+                               alt="listing preview" 
+                               className="object-cover group-hover:scale-110 transition-transform duration-700"
+                               sizes="(max-width: 768px) 80px, 128px"
+                             />
                            ) : (
                              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
                                <ShieldAlert className="w-8 h-8 opacity-20" />
                              </div>
                            )}
                            {list.aiFlagged && (
-                             <div className="absolute inset-0 bg-rose-600/10 backdrop-blur-[1px] flex items-center justify-center">
+                             <div className="absolute inset-0 bg-rose-600/10 backdrop-blur-[1px] flex items-center justify-center z-10">
                                 <BadgeAlert className="w-10 h-10 text-white drop-shadow-lg" />
                              </div>
                            )}
@@ -197,13 +249,13 @@ export default function ModerationQueue() {
                         <div className="flex flex-col gap-1 pr-8">
                            <div className="flex items-center gap-3 mb-1">
                                <span className="text-[18px] font-black text-gray-900 line-clamp-1">{list.title}</span>
-                               <Link href={`/listing/${list.slug}`} target="_blank" className="p-1.5 bg-gray-100 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
+                               <Link href={`/listing/${list.slug}`} className="p-1.5 bg-gray-100 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
                                   <ExternalLink className="w-3.5 h-3.5" />
                                </Link>
                            </div>
                            <p className="text-sm font-black text-emerald-600 mb-2">₹{list.price.toLocaleString('en-IN')}</p>
                            
-                           {activeTab === 'flagged' && list.aiVerification && (
+                           {list.aiFlagged && list.aiVerification && (
                              <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-rose-100 shadow-sm flex flex-col gap-1.5 mt-2 max-w-md">
                                 <div className="flex items-center gap-2">
                                     <BrainCircuit className="w-3.5 h-3.5 text-rose-500" />
@@ -226,9 +278,11 @@ export default function ModerationQueue() {
                     <td className="px-4 sm:px-8 py-6 sm:py-8">
                       <div className="flex flex-col gap-2">
                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center font-black text-gray-400 text-sm border border-white shadow-sm">
-                               {list.seller?.displayName?.charAt(0) || '?'}
-                            </div>
+                            <Avatar 
+                               src={list.seller?.photoURL} 
+                               name={list.seller?.displayName}
+                               size="sm"
+                             />
                             <div className="flex flex-col">
                                <div className="flex items-center gap-2">
                                   <span className="font-black text-gray-900 leading-tight">{list.seller?.displayName || 'Campus User'}</span>
@@ -255,7 +309,7 @@ export default function ModerationQueue() {
 
                     <td className="px-4 sm:px-8 py-6 sm:py-8">
                        <div className="flex items-center justify-end gap-2 sm:gap-3">
-                          {activeTab !== 'live' && (
+                          {(list.status === 'pending' || list.status === 'rejected') && (
                              <button 
                                 onClick={() => setModalConfig({ isOpen: true, type: 'approve', slug: list.slug, title: list.title })}
                                 className="h-12 sm:h-14 px-4 sm:px-6 bg-emerald-600 text-white rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs flex items-center gap-2 hover:bg-emerald-700 shadow-lg"

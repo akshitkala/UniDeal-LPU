@@ -8,17 +8,17 @@ import { formatDistanceToNow } from 'date-fns'
 import { 
   MapPin, 
   ShieldCheck, 
-  Clock, 
   ArrowLeft, 
-  Share2, 
   Flag,
   CheckCircle2,
-  AlertCircle,
   ChevronRight,
-  Info
+  Clock,
+  Package
 } from 'lucide-react'
 import { ContactButton } from '@/components/listing/ContactButton'
 import { ReportModal } from '@/components/listing/ReportModal'
+import { cn } from '@/lib/utils'
+import { Avatar } from '@/components/ui/Avatar'
 
 export default function ListingDetail() {
   const { slug } = useParams()
@@ -32,11 +32,11 @@ export default function ListingDetail() {
     async function fetchListing() {
       try {
         const res = await fetch(`/api/listings/${slug}`)
-        if (!res.ok) throw new Error('Listing not found or unavailable')
+        if (!res.ok) throw new Error('Listing not found')
         const data = await res.json()
         setListing(data)
       } catch (err) {
-        setError('Listing not found or has been removed.')
+        setError('Listing could not be retrieved.')
       } finally {
         setLoading(false)
       }
@@ -46,14 +46,14 @@ export default function ListingDetail() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
-        <div className="h-6 bg-gray-100 rounded w-48 mb-8"></div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-7 h-[600px] bg-gray-50 rounded-[2.5rem]"></div>
-          <div className="lg:col-span-5 flex flex-col gap-6">
-            <div className="h-12 bg-gray-100 rounded-2xl w-3/4"></div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
+        <div className="h-4 bg-gray-100 rounded w-48 mb-8"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="aspect-square bg-gray-50 rounded-2xl"></div>
+          <div className="space-y-6">
+            <div className="h-10 bg-gray-100 rounded-xl w-3/4"></div>
+            <div className="h-4 bg-gray-100 rounded-xl w-1/4"></div>
             <div className="h-40 bg-gray-100 rounded-2xl"></div>
-            <div className="h-20 bg-gray-100 rounded-2xl"></div>
           </div>
         </div>
       </div>
@@ -63,210 +63,201 @@ export default function ListingDetail() {
   if (error || !listing) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-32 text-center">
-        <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
-           <AlertCircle className="w-10 h-10" />
+        <div className="w-20 h-20 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-6">
+           <Package className="w-10 h-10" />
         </div>
-        <h2 className="text-3xl font-black text-gray-900 mb-4">{error}</h2>
-        <p className="text-gray-500 font-medium mb-10">The item might have been sold or the link is invalid.</p>
-        <Link href="/" className="inline-flex items-center gap-2 bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg hover:bg-emerald-700 transition">
-          <ArrowLeft className="w-5 h-5" /> Back to Marketplace
+        <h2 className="text-2xl font-black text-gray-900 mb-4">{error}</h2>
+        <Link href="/browse" className="inline-flex items-center gap-2 bg-[#16a34a] text-white px-8 py-3 rounded-full font-bold shadow-lg transition">
+          <ArrowLeft className="w-5 h-5" /> Back to Market
         </Link>
       </div>
     )
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8 pb-32">
-      
-      {/* Header Actions */}
-      <div className="flex items-center justify-between">
-        <Link href="/" className="group flex items-center gap-2 text-gray-400 hover:text-emerald-600 transition-colors font-bold text-sm">
-          <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-emerald-50 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </div>
-          Back to Deals
-        </Link>
-        <div className="flex gap-3">
-           <button className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all border border-transparent hover:border-emerald-100">
-              <Share2 className="w-4 h-4" />
-           </button>
-           <button 
-             onClick={() => setIsReportModalOpen(true)}
-             className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-all border border-transparent hover:border-rose-100"
-            >
-              <Flag className="w-4 h-4" />
-           </button>
-        </div>
-      </div>
+  const formatCondition = (condition: string) => {
+    return condition.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+  const getConditionStyles = (condition: string) => {
+    switch (condition.toLowerCase()) {
+      case 'new': return 'bg-green-50 text-green-700'
+      case 'like-new': return 'bg-blue-50 text-blue-700'
+      case 'good': return 'bg-yellow-50 text-yellow-700'
+      case 'used': return 'bg-orange-50 text-orange-700'
+      case 'damaged': return 'bg-red-50 text-red-700'
+      default: return 'bg-gray-50 text-gray-700'
+    }
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-8">
+      
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
+         <Link href="/browse" className="hover:text-gray-900 transition-colors">Categories</Link>
+         <ChevronRight className="w-3 h-3" />
+         <Link href={`/browse?category=${listing.category.slug}`} className="hover:text-gray-900 transition-colors">{listing.category.name}</Link>
+         <ChevronRight className="w-3 h-3" />
+         <span className="text-gray-900 truncate max-w-[150px] sm:max-w-xs">{listing.title}</span>
+      </nav>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
         
-        {/* Left Cloud: Images & Specs (60% on desktop) */}
-        <div className="lg:col-span-7 flex flex-col gap-10">
-          
-          <div className="flex flex-col gap-6">
-            <div className="relative aspect-square md:aspect-video w-full bg-gray-50 rounded-[2.5rem] overflow-hidden border border-gray-100 flex items-center justify-center shadow-sm">
-              {listing.images && listing.images.length > 0 ? (
-                <Image 
-                  src={`${listing.images[activeImage]}?w=1200&c_limit&q=90&f_auto`}
-                  alt={listing.title} 
-                  fill
-                  priority
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 800px"
-                />
-              ) : (
-                <div className="flex flex-col items-center gap-4 text-gray-300">
-                   <Info className="w-12 h-12" />
-                   <span className="font-bold uppercase tracking-widest text-xs">No media available</span>
-                </div>
-              )}
-            </div>
-            
-            {listing.images && listing.images.length > 1 && (
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
-                {listing.images.map((img: string, idx: number) => (
-                  <button 
-                    key={idx} 
-                    onClick={() => setActiveImage(idx)}
-                    className={`relative w-24 h-24 flex-shrink-0 rounded-2xl overflow-hidden border-2 transition-all hover:scale-105 ${activeImage === idx ? 'border-emerald-500 shadow-md' : 'border-gray-100'}`}
-                  >
-                    <Image src={`${img}?w=200&h=200&c_fill&q=80`} fill alt="thumbnail" className="object-cover" />
-                  </button>
-                ))}
+        {/* LEFT COLUMN: Image Gallery */}
+        <div className="flex flex-col gap-6">
+          <div className="relative aspect-square w-full bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 flex items-center justify-center p-8 group">
+            {listing.images && listing.images.length > 0 ? (
+              <Image 
+                src={`${listing.images[activeImage]}?w=1200&c_limit&q=90&f_auto`}
+                alt={listing.title} 
+                fill
+                priority
+                className="object-contain p-8 group-hover:scale-105 transition-transform duration-500"
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            ) : (
+              <div className="text-gray-300 flex flex-col items-center gap-4">
+                 <Package className="w-12 h-12" />
+                 <span className="text-xs font-bold uppercase tracking-widest">Image missing</span>
               </div>
             )}
           </div>
-
-          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 border border-gray-100 shadow-sm">
-            <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-6 sm:mb-8 flex items-center gap-3">
-              Description
-              <div className="h-px bg-gray-100 flex-1 ml-4" />
-            </h3>
-            <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed whitespace-pre-wrap font-medium">
-              {listing.description}
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-50">
-              <div className="bg-emerald-50/50 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-emerald-100/50 flex flex-col gap-1">
-                 <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Ownership & Condition</span>
-                 <span className="text-lg sm:text-xl font-black text-emerald-950 uppercase tracking-tight">
-                   {listing.condition.replace('-', ' ')}
-                 </span>
-              </div>
-              <div className="bg-gray-50 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 flex flex-col gap-1">
-                 <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pick-up Location</span>
-                 <span className="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-2">
-                   <MapPin className="w-4 h-4 sm:w-5 h-5 text-emerald-600" />
-                   Campus
-                 </span>
-              </div>
+          
+          {listing.images && listing.images.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+              {listing.images.map((img: string, idx: number) => (
+                <button 
+                  key={idx} 
+                  onClick={() => setActiveImage(idx)}
+                  className={cn(
+                    "relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all bg-gray-50 p-2",
+                    activeImage === idx ? 'border-[#16a34a] ring-4 ring-green-500/10' : 'border-transparent hover:border-gray-200'
+                  )}
+                >
+                  <Image src={`${img}?w=200&h=200&c_contain&q=80`} fill alt="thumbnail" className="object-contain p-2" sizes="80px" />
+                </button>
+              ))}
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Right Cloud: Pricing & CTA (40% on desktop) */}
-        <div className="lg:col-span-5 relative">
-          <div className="lg:sticky lg:top-24 flex flex-col gap-8">
-            
-            <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-2xl shadow-gray-200/50">
-               <div className="flex flex-col gap-6">
-                 <div className="flex items-center justify-between">
-                    <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-emerald-200">
-                      {listing.category?.name || 'Item'}
-                    </span>
-                    <div className="flex items-center gap-1.5 text-gray-400 font-bold text-[10px] uppercase tracking-widest">
-                       <Clock className="w-3.5 h-3.5" />
-                       {formatDistanceToNow(new Date(listing.createdAt))} ago
-                    </div>
-                 </div>
+        {/* RIGHT COLUMN: Details (Sticky) */}
+        <div className="md:sticky md:top-24 flex flex-col gap-8">
+          
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+               <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 leading-tight tracking-tight">
+                 {listing.title}
+               </h1>
+               <p className="text-sm font-medium text-gray-500 leading-relaxed max-w-lg">
+                 {listing.description}
+               </p>
+            </div>
 
-                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-950 leading-tight tracking-tight">
-                   {listing.title}
-                 </h1>
+            <div className="h-px bg-gray-100 w-full" />
 
-                 <div className="flex items-baseline gap-3">
-                   <span className="text-4xl sm:text-5xl md:text-6xl font-black text-emerald-600 tracking-tighter">
-                     ₹{listing.price.toLocaleString('en-IN')}
+            <div className="flex flex-col gap-1">
+               <div className="flex items-start">
+                   <span className="text-xl font-bold text-gray-900 mt-1 mr-1">₹</span>
+                   <span className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tighter">
+                     {listing.price.toLocaleString('en-IN')}
                    </span>
-                   {listing.negotiable && (
-                     <span className="text-[10px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100">
-                        Negotiable
+               </div>
+               {listing.negotiable && (
+                 <span className="text-sm text-[#16a34a] font-bold mt-1">Price is negotiable</span>
+               )}
+            </div>
+
+            <div className="h-px bg-gray-100 w-full" />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                     <Package className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col">
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">State</span>
+                     <span className={cn(
+                        "text-xs font-bold px-2 py-0.5 rounded-full w-fit uppercase tracking-tight",
+                        getConditionStyles(listing.condition)
+                     )}>
+                        {formatCondition(listing.condition)}
                      </span>
-                   )}
-                 </div>
-
-                 <div className="h-px bg-gray-50 w-full" />
-
-                 <div className="flex items-center gap-4 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
-                   <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow-sm border border-gray-100 relative">
-                     {listing.seller?.photoURL ? (
-                       <Image src={listing.seller.photoURL} fill alt="avatar" className="object-cover" />
-                     ) : (
-                       <span className="font-black text-emerald-600 text-xl">{listing.seller?.displayName?.charAt(0) || 'U'}</span>
-                     )}
-                   </div>
-                   <div className="flex flex-col min-w-0">
-                     <span className="font-black text-gray-900 flex items-center gap-1.5 truncate">
-                       {listing.seller?.displayName || 'Campus User'}
-                       <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  </div>
+               </div>
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                     <Clock className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col">
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Listed</span>
+                     <span className="text-sm font-bold text-gray-900">
+                        {formatDistanceToNow(new Date(listing.createdAt))} ago
                      </span>
-                     <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Verified Seller</span>
-                   </div>
-                 </div>
+                  </div>
+               </div>
+            </div>
 
-                 <div className="hidden lg:block">
-                   <ContactButton slug={listing.slug} sellerId={listing.seller?._id} />
+            <div className="h-px bg-gray-100 w-full" />
+
+            {/* Seller */}
+            <div className="flex flex-col gap-3">
+               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Market Vendor</span>
+               <div className="flex items-center gap-4 bg-white p-4 rounded-3xl border border-gray-100">
+                 <Avatar 
+                   src={listing.seller?.photoURL} 
+                   name={listing.seller?.displayName}
+                   size="lg"
+                 />
+                 <div className="flex flex-col min-w-0">
+                   <span className="font-bold text-gray-900 flex items-center gap-1.5 truncate">
+                     {listing.seller?.displayName || 'Campus User'}
+                     <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                   </span>
+                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Verified Student Seller</span>
                  </div>
                </div>
             </div>
 
-            <div className="bg-emerald-50/30 rounded-[2.5rem] p-8 border border-emerald-100/50 flex flex-col gap-6">
-               <h4 className="text-lg font-black text-emerald-950 flex items-center gap-2">
-                 <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                 Buy Safely on Campus
-               </h4>
-               <ul className="flex flex-col gap-4">
-                 {[
-                   "Meet in well-lit public campus areas.",
-                   "Inspect the item before paying.",
-                   "No advance transfers to unknown links.",
-                   "Prefer UPI/Cash during face-to-face handover."
-                 ].map((tip, i) => (
-                   <li key={i} className="flex gap-3 items-start group">
-                      <div className="mt-1 w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                      <p className="text-xs font-bold text-emerald-900/60 leading-tight">{tip}</p>
-                   </li>
-                 ))}
-               </ul>
-                  <button 
-                    onClick={() => setIsReportModalOpen(true)}
-                    className="mt-4 p-5 bg-white rounded-3xl border border-emerald-100 flex gap-4 items-center group transition-all hover:bg-rose-50 hover:border-rose-100 w-full"
-                  >
-                     <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-rose-500 group-hover:text-white transition-colors">
-                        <AlertCircle className="w-5 h-5" />
-                     </div>
-                     <div className="flex flex-col text-left">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:text-rose-500 transition-colors">Suspicious?</span>
-                        <span className="text-sm font-black text-gray-900 flex items-center gap-1 group-hover:text-rose-700 transition-colors">
-                           Report Listing <ChevronRight className="w-4 h-4" />
-                        </span>
-                     </div>
-                  </button>
+            {/* Action Bar */}
+            <div className="flex flex-col gap-3 pt-4">
+               <div className="w-full">
+                  <ContactButton slug={listing.slug} sellerId={listing.seller?._id} />
+               </div>
+               <button 
+                 onClick={() => setIsReportModalOpen(true)}
+                 className="w-full h-12 rounded-full border border-gray-200 text-gray-400 font-bold text-sm hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+               >
+                 <Flag className="w-4 h-4" /> Report this listing
+               </button>
             </div>
+
+            {/* Info Rows */}
+            <div className="flex flex-col mt-4 border-t border-gray-100">
+               <div className="flex items-center gap-4 py-4 border-b border-gray-50">
+                  <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-[#16a34a]">
+                     <MapPin className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">Campus pickup — LPU area</span>
+               </div>
+               <div className="flex items-center gap-4 py-4 border-b border-gray-50">
+                  <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-[#16a34a]">
+                     <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">Direct WhatsApp Contact Only</span>
+               </div>
+            </div>
+
           </div>
         </div>
       </div>
+
       <ReportModal 
         slug={listing.slug} 
         isOpen={isReportModalOpen} 
         onClose={() => setIsReportModalOpen(false)} 
       />
- 
-      {/* Mobile Fixed Contact Bar */}
-      <div className="lg:hidden fixed bottom-16 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 z-40 animate-in slide-in-from-bottom duration-500 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        <ContactButton slug={listing.slug} sellerId={listing.seller?._id} />
-      </div>
+
     </div>
   )
 }

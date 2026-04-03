@@ -1,61 +1,62 @@
 import Link from 'next/link'
-import { HelpCircle, Mail, MapPin } from 'lucide-react'
 
 export function Footer() {
   return (
-    <footer className="w-full bg-[#1A1A1A] text-white pt-12 pb-6 mt-auto">
-      <div className="max-w-[1280px] mx-auto px-4">
-        {/* 4-Column Grid on Desktop / Stack on Mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 border-b border-gray-800 pb-8">
+    <footer className="bg-white border-t border-gray-100 pt-16 pb-8 mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12 pb-12">
           
           {/* Column 1: Brand */}
-          <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-bold text-[#2D9A54]">UniDeal</h2>
-            <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-[#16a34a] rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-white font-black text-xl">U</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900 tracking-tight">UniDeal</span>
+            </Link>
+            <p className="text-xs text-gray-400 leading-relaxed mb-4">
               Campus marketplace — buy and sell, simply.
+            </p>
+            <p className="text-[10px] text-gray-400 font-medium italic">
+              © 2026 UniDeal. Not affiliated with any university.
             </p>
           </div>
 
-          {/* Column 2: Quick Links */}
-          <div className="flex flex-col gap-3">
-            <h3 className="font-semibold text-lg mb-2">Platform</h3>
-            <Link href="/" className="text-gray-400 hover:text-white transition-colors text-sm">Browse Listings</Link>
-            <Link href="/post" className="text-gray-400 hover:text-white transition-colors text-sm">List an Item</Link>
-            <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors text-sm">My Dashboard</Link>
+          {/* Column 2: Explore */}
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 mb-4 tracking-tight uppercase">Explore</h3>
+            <ul className="flex flex-col gap-3">
+              <li><Link href="/browse" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Browse Listings</Link></li>
+              <li><Link href="/#how-it-works" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">How it works</Link></li>
+            </ul>
           </div>
 
-          {/* Column 3: Trust & Safety */}
-          <div className="flex flex-col gap-3">
-            <h3 className="font-semibold text-lg mb-2">Trust & Safety</h3>
-            <Link href="/safety" className="text-gray-400 hover:text-white transition-colors text-sm">Safety Guidelines</Link>
-            <Link href="/report" className="text-gray-400 hover:text-white transition-colors text-sm">Report a Listing</Link>
-            <div className="flex items-center gap-2 text-gray-400 mt-2">
-              <span className="text-xs px-2 py-1 bg-gray-800 rounded font-medium text-gray-300 border border-gray-700">AI Moderated</span>
-            </div>
+          {/* Column 3: Account */}
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 mb-4 tracking-tight uppercase">Account</h3>
+            <ul className="flex flex-col gap-3">
+              <li><Link href="/login" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Sign In</Link></li>
+              <li><Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">My Dashboard</Link></li>
+              <li><Link href="/profile" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Profile</Link></li>
+            </ul>
           </div>
 
           {/* Column 4: Support */}
-          <div className="flex flex-col gap-3">
-            <h3 className="font-semibold text-lg mb-2">Support</h3>
-            <Link href="/contact" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm">
-              <Mail className="w-4 h-4" />
-              Contact Us
-            </Link>
-            <Link href="/faq" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm">
-              <HelpCircle className="w-4 h-4" />
-              FAQs
-            </Link>
-            <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">Privacy Policy</Link>
-            <Link href="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">Terms of Service</Link>
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 mb-4 tracking-tight uppercase">Support</h3>
+            <ul className="flex flex-col gap-3">
+              <li><Link href="/contact" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Contact Us</Link></li>
+              <li><Link href="/privacy" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Privacy Policy</Link></li>
+            </ul>
           </div>
         </div>
-
-        {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 gap-4">
-          <p>© {new Date().getFullYear()} UniDeal Marketplace. All rights reserved.</p>
-          <p className="flex items-center gap-1">
-            Connect with the <span className="font-semibold text-gray-400">Campus Community</span>
-          </p>
+        
+        <div className="pt-8 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-gray-400 font-medium uppercase tracking-widest text-center sm:text-left">
+          <p>Handcrafted for the campus community</p>
+          <div className="flex items-center gap-4">
+             <Link href="/terms" className="hover:text-gray-900 transition-colors">Terms</Link>
+             <Link href="/safety" className="hover:text-gray-900 transition-colors">Safety</Link>
+          </div>
         </div>
       </div>
     </footer>

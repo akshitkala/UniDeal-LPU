@@ -109,6 +109,9 @@ ListingSchema.index({ seller: 1 })
 ListingSchema.index({ createdAt: -1 })
 ListingSchema.index({ expiresAt: 1 })
 
+// Text Index for Search (title + description)
+ListingSchema.index({ title: 'text', description: 'text' })
+
 // Set expiresAt to 60 days from creation on new documents
 ListingSchema.pre('save', function () {
   if (this.isNew && !this.expiresAt) {

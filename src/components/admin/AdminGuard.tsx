@@ -11,7 +11,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const res = await fetch('/api/user/me')
+        const res = await fetch('/api/user/profile')
         if (res.ok) {
           const user = await res.json()
           if (user.role === 'admin') {

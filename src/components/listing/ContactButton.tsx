@@ -73,7 +73,7 @@ export function ContactButton({ slug, sellerId }: ContactButtonProps) {
         onClick={handleContact}
         disabled={loading || error === 'rate_limited' || error === 'no_number'}
         className={cn(
-          "w-full group h-16 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl",
+          "w-full group h-14 sm:h-16 rounded-2xl font-bold sm:font-black text-base sm:text-lg flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl",
           !user ? "bg-gray-200 text-gray-500 hover:bg-gray-300 shadow-none border border-gray-300" :
           loading ? "bg-emerald-600/80 text-white cursor-wait" :
           error === 'rate_limited' ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed shadow-none" :
@@ -82,19 +82,19 @@ export function ContactButton({ slug, sellerId }: ContactButtonProps) {
         )}
       >
         {loading ? (
-          <Loader2 className="w-6 h-6 animate-spin" />
+          <Loader2 className="w-5 h-5 animate-spin" />
         ) : !user ? (
           <>
-            <Lock className="w-5 h-5 opacity-40" /> 
+            <Lock className="w-4 h-4 opacity-40" /> 
             Sign in to Contact
           </>
         ) : error === 'rate_limited' ? (
           <>Daily limit reached</>
         ) : error === 'no_number' ? (
-          <>Contact not available</>
+          <>Unavailable</>
         ) : (
           <>
-            <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform" /> 
+            <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" /> 
             Contact on WhatsApp
           </>
         )}

@@ -5,6 +5,7 @@ export type ContactSubject =
   | 'ban_appeal'
   | 'listing_dispute'
   | 'general'
+  | 'complaint'
   | 'other'
 
 export type ContactStatus = 'open' | 'resolved'
@@ -26,7 +27,7 @@ const ContactMessageSchema = new Schema<IContactMessage>(
     email: { type: String, required: true, trim: true, lowercase: true },
     subject: {
       type: String,
-      enum: ['bug_report', 'ban_appeal', 'listing_dispute', 'general', 'other'],
+      enum: ['bug_report', 'ban_appeal', 'listing_dispute', 'general', 'complaint', 'other'],
       required: true,
     },
     message: { type: String, required: true, maxlength: 1000 },
@@ -40,6 +41,11 @@ const ContactMessageSchema = new Schema<IContactMessage>(
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 )
+
+// Force cache clear for schema updates in development
+if (process.env.NODE_ENV === 'development') {
+  delete mongoose.models.ContactMessage
+}
 
 const ContactMessage: Model<IContactMessage> =
   mongoose.models.ContactMessage ||

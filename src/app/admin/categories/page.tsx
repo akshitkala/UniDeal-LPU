@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { FolderTree, Trash2, Loader2, Plus } from 'lucide-react'
-import { ConfirmModal } from '@/components/admin/ConfirmModal'
+import { ConfirmModal } from '@/components/global/ConfirmModal'
 import { Banner } from '@/components/global/Banner'
 
 export default function CategoryManagement() {
@@ -131,19 +131,13 @@ export default function CategoryManagement() {
               <h3 className="font-bold flex items-center gap-2 text-xl text-gray-900 border-b border-gray-100 pb-3"><Plus className="w-5 h-5"/> New Branch</h3>
               
               <label className="flex flex-col gap-1 text-sm font-semibold text-gray-700">
-                Display Name
-                <input required type="text" value={newCat.name} onChange={e => setNewCat({...newCat, name: e.target.value})} className="border border-gray-300 rounded-lg h-10 px-3 font-normal" placeholder="e.g. Graphic Cards" />
+                Category Name
+                <input required type="text" value={newCat.name} onChange={e => setNewCat({ name: e.target.value, slug: '', icon: '' })} className="border border-gray-300 rounded-lg h-10 px-3 font-normal" placeholder="e.g. Graphic Cards" />
               </label>
 
-              <label className="flex flex-col gap-1 text-sm font-semibold text-gray-700">
-                URL Slug
-                <input required type="text" value={newCat.slug} onChange={e => setNewCat({...newCat, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})} className="border border-gray-300 rounded-lg h-10 px-3 font-mono font-normal" placeholder="e.g. graphic-cards" />
-              </label>
-
-              <label className="flex flex-col gap-1 text-sm font-semibold text-gray-700">
-                Icon String (Lucide)
-                <input required type="text" value={newCat.icon} onChange={e => setNewCat({...newCat, icon: e.target.value})} className="border border-gray-300 rounded-lg h-10 px-3 font-mono text-sm font-normal" placeholder="e.g. Cpu" />
-              </label>
+              <p className="text-[10px] text-gray-400 font-medium italic">
+                The URL slug and system icon will be generated automatically based on the identifier provided above.
+              </p>
               
               <button disabled={creating} type="submit" className="mt-2 bg-[#2D9A54] hover:bg-[#258246] text-white font-bold h-11 rounded-lg transition disabled:opacity-50">
                 {creating ? 'Committing...' : 'Deploy Taxonomy'}

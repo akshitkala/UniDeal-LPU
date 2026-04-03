@@ -15,7 +15,7 @@ export default function ContactPage() {
     let mounted = true
     const checkSession = async () => {
       try {
-        const res = await fetch('/api/user/me')
+        const res = await fetch('/api/user/profile')
         if (res.ok) {
           const data = await res.json()
           if (mounted) {
@@ -113,6 +113,23 @@ export default function ContactPage() {
                 className={`h-12 rounded-xl px-4 border ${user ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-white border-[#E5E5E5] focus:border-[#2D9A54] focus:ring-1 focus:ring-[#2D9A54] outline-none transition'}`}
                 placeholder="Enter your email"
               />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-bold text-gray-700">Inquiry Type</label>
+              <select 
+                required
+                value={formData.subject}
+                onChange={e => setFormData({...formData, subject: e.target.value})}
+                className="h-12 rounded-xl px-4 border bg-white border-[#E5E5E5] focus:border-[#2D9A54] focus:ring-1 focus:ring-[#2D9A54] outline-none transition cursor-pointer"
+              >
+                <option value="general">General Inquiry</option>
+                <option value="complaint">Official Complaint</option>
+                <option value="bug_report">Bug Report</option>
+                <option value="ban_appeal">Ban Appeal</option>
+                <option value="listing_dispute">Listing Dispute</option>
+                <option value="other">Other</option>
+              </select>
             </div>
 
             <div className="flex flex-col gap-1.5">

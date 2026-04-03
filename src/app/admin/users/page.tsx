@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { Search, ShieldBan, ShieldCheck, Trash2, Loader2, UserX } from 'lucide-react'
-import { ConfirmModal } from '@/components/admin/ConfirmModal'
+import { ConfirmModal } from '@/components/global/ConfirmModal'
 import { Banner } from '@/components/global/Banner'
 import { formatDistanceToNow } from 'date-fns'
+import { Avatar } from '@/components/ui/Avatar'
 
 export default function UsersManagement() {
   const [users, setUsers] = useState<any[]>([])
@@ -135,10 +136,12 @@ export default function UsersManagement() {
                     
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
-                           {u.photoURL ? <img src={u.photoURL} alt="pfp" className="w-full h-full object-cover"/> : <span className="text-[10px] text-gray-500 font-bold uppercase">{u.displayName?.substring(0,2)}</span>}
-                         </div>
-                         <div className="flex flex-col">
+                          <Avatar 
+                            src={u.photoURL} 
+                            name={u.displayName}
+                            size="md"
+                          />
+                          <div className="flex flex-col">
                             <span className="font-bold text-gray-900">{u.displayName}</span>
                             <span className="text-xs text-gray-500 truncate max-w-[200px]">{u.email}</span>
                          </div>

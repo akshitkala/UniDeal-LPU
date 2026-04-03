@@ -28,17 +28,31 @@ import {
   Clock
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Banner } from '@/components/global/Banner'
+import { Avatar } from '@/components/ui/Avatar'
+import Image from 'next/image'
 
 export default function AdminOverview() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [approvalMode, setApprovalMode] = useState<string>('ai_flagging')
+  const [isUpdatingMode, setIsUpdatingMode] = useState(false)
+  const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch('/api/admin/overview')
-        if (res.ok) {
-          setData(await res.json())
+        const [ovRes, configRes] = await Promise.all([
+          fetch('/api/admin/overview'),
+          fetch('/api/admin/config')
+        ])
+        
+        if (ovRes.ok) {
+           setData(await ovRes.json())
+        }
+        if (configRes.ok) {
+           const config = await configRes.json()
+           setApprovalMode(config.approvalMode)
         }
       } catch (err) {
         console.error(err)
@@ -48,6 +62,28 @@ export default function AdminOverview() {
     }
     fetchData()
   }, [])
+
+  const handleModeChange = async (newMode: string) => {
+    setIsUpdatingMode(true)
+    setMessage(null)
+    try {
+      const res = await fetch('/api/admin/config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approvalMode: newMode })
+      })
+      if (res.ok) {
+        setApprovalMode(newMode)
+        setMessage({ text: 'Interception policy updated successfully.', type: 'success' })
+      } else {
+        setMessage({ text: 'Failed to update policy.', type: 'error' })
+      }
+    } catch (err) {
+      setMessage({ text: 'Network Error: Command transmission failed.', type: 'error' })
+    } finally {
+      setIsUpdatingMode(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -112,6 +148,14 @@ export default function AdminOverview() {
   return (
     <div className="flex flex-col gap-10 sm:gap-16 py-6 sm:py-12 px-4 sm:px-6 max-w-[1440px] mx-auto mb-24 overflow-hidden">
       
+      {message && (
+        <Banner 
+          message={message.text} 
+          variant={message.type === 'success' ? 'success' : 'error'} 
+          onClose={() => setMessage(null)} 
+        />
+      )}
+
       {/* Neural Header */}
       <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 relative">
         <div className="flex flex-col gap-3 sm:gap-4 relative z-10">
@@ -151,23 +195,41 @@ export default function AdminOverview() {
       </section>
 
       {/* Mode Interlink */}
-      <nav className="relative group overflow-hidden bg-gray-900 rounded-[3rem] p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10 shadow-2xl-soft">
-         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 blur-[100px] -mr-64 -mt-64" />
-         <div className="flex flex-col gap-2 relative z-10">
-            <h3 className="text-3xl font-black text-white tracking-tighter flex items-center gap-4 uppercase">
-                Tactical Sweep Configuration
-            </h3>
-            <p className="text-slate-400 font-medium max-w-lg">Configures the global listing ingestion policy. Manual review vs AI-assisted filtering.</p>
-         </div>
-          <div className="flex items-center gap-3 p-1.5 sm:p-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] relative z-10 shrink-0">
-            <button className="flex-1 sm:px-10 py-4 sm:py-5 rounded-[1rem] sm:rounded-[1.5rem] bg-white text-gray-900 font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
-                <Zap className="w-4 h-4 text-emerald-500" /> AI Filtering Active
-            </button>
-            <button className="flex-1 sm:px-10 py-4 sm:py-5 rounded-[1rem] sm:rounded-[1.5rem] text-slate-400 hover:text-white font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all">
-                Manual Override
-            </button>
+       <nav className="relative group overflow-hidden bg-gray-900 rounded-[3rem] p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10 shadow-2xl-soft">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 blur-[100px] -mr-64 -mt-64" />
+          <div className="flex flex-col gap-2 relative z-10">
+             <h3 className="text-3xl font-black text-white tracking-tighter flex items-center gap-4 uppercase">
+                 Tactical Sweep Configuration
+             </h3>
+             <p className="text-slate-400 font-medium max-w-lg">Configures the global listing ingestion policy. Manual review vs AI-assisted filtering.</p>
           </div>
-      </nav>
+           <div className="flex items-center gap-3 p-1.5 sm:p-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] relative z-10 shrink-0">
+             {[
+               { id: 'automatic', label: 'Auto Approve', icon: Zap },
+               { id: 'ai_flagging', label: 'AI Moderation', icon: BrainCircuit },
+               { id: 'manual', label: 'Manual Review', icon: ShieldAlert }
+             ].map(mode => (
+               <button 
+                 key={mode.id}
+                 disabled={isUpdatingMode}
+                 onClick={() => handleModeChange(mode.id)}
+                 className={cn(
+                   "px-6 py-4 rounded-[1.2rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2",
+                   approvalMode === mode.id 
+                     ? "bg-white text-gray-900 shadow-xl" 
+                     : "text-slate-400 hover:text-white"
+                 )}
+               >
+                 {isUpdatingMode && approvalMode === mode.id ? (
+                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                 ) : (
+                   <mode.icon className={cn("w-3.5 h-3.5", approvalMode === mode.id ? "text-emerald-500" : "text-slate-500")} />
+                 )}
+                 {mode.label}
+               </button>
+             ))}
+           </div>
+       </nav>
 
       {/* Operation Centers */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -197,36 +259,49 @@ export default function AdminOverview() {
              ) : (
                <div className="flex flex-col divide-y divide-gray-50">
                  {data.pendingQueue.map((item: any) => (
-                   <div key={item._id} className="p-8 flex items-center gap-8 hover:bg-gray-50/50 transition-all group/item">
-                     <div className="w-24 h-24 bg-gray-100 rounded-[2rem] flex-shrink-0 relative overflow-hidden border border-gray-100 shadow-xl-soft group-hover/item:scale-105 transition-transform duration-500">
-                        {item.images?.[0] ? (
-                            <img src={item.images[0]} className="w-full h-full object-cover" alt="item" />
-                        ) : (
-                            <Terminal className="w-10 h-10 text-gray-300 m-auto mt-7" />
-                        )}
-                        {item.aiFlagged && (
-                            <div className="absolute inset-0 bg-rose-500/10 flex items-center justify-center">
-                                <ZapOff className="w-8 h-8 text-rose-500 animate-pulse" />
-                            </div>
-                        )}
-                     </div>
+                    <div key={item._id} className="p-8 flex items-center gap-8 hover:bg-gray-50/50 transition-all group/item">
+                      <div className="w-24 h-24 bg-gray-100 rounded-[2rem] flex-shrink-0 relative overflow-hidden border border-gray-100 shadow-xl-soft group-hover/item:scale-105 transition-transform duration-500">
+                         {item.images?.[0] ? (
+                             <Image 
+                               src={item.images[0]} 
+                               fill 
+                               className="object-cover" 
+                               alt={item.title}
+                               sizes="96px"
+                             />
+                         ) : (
+                             <Terminal className="w-10 h-10 text-gray-300 m-auto mt-7" />
+                         )}
+                         {item.aiFlagged && (
+                             <div className="absolute inset-0 bg-rose-500/10 flex items-center justify-center">
+                                 <ZapOff className="w-8 h-8 text-rose-500 animate-pulse" />
+                             </div>
+                         )}
+                      </div>
 
-                     <div className="flex-1 min-w-0 flex flex-col gap-2">
-                        <div className="flex items-center gap-3">
-                           <h4 className="text-2xl font-black text-gray-900 tracking-tight truncate uppercase leading-none">
-                               {item.title}
-                           </h4>
-                           {item.aiFlagged && (
-                               <span className="bg-rose-50 text-rose-600 text-[9px] font-black px-3 py-1 rounded-full border border-rose-100 uppercase tracking-widest animate-pulse">
-                                   Critical Risk
-                               </span>
-                           )}
-                        </div>
-                        <div className="flex items-center gap-6 text-sm">
-                            <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Origin</span>
-                                <span className="font-bold text-gray-700">{item.seller?.displayName || 'Unknown Signal'}</span>
-                            </div>
+                      <div className="flex-1 min-w-0 flex flex-col gap-2">
+                         <div className="flex items-center gap-3">
+                            <h4 className="text-2xl font-black text-gray-900 tracking-tight truncate uppercase leading-none">
+                                {item.title}
+                            </h4>
+                            {item.aiFlagged && (
+                                <span className="bg-rose-50 text-rose-600 text-[9px] font-black px-3 py-1 rounded-full border border-rose-100 uppercase tracking-widest animate-pulse">
+                                    Critical Risk
+                                </span>
+                            )}
+                         </div>
+                         <div className="flex items-center gap-6 text-sm">
+                             <div className="flex items-center gap-3">
+                                 <Avatar 
+                                   src={item.seller?.photoURL}
+                                   name={item.seller?.displayName}
+                                   size="xs"
+                                 />
+                                 <div className="flex flex-col">
+                                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Origin</span>
+                                     <span className="font-bold text-gray-700">{item.seller?.displayName || 'Unknown Signal'}</span>
+                                 </div>
+                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Asset Value</span>
                                 <span className="font-black text-emerald-600">₹{item.price.toLocaleString('en-IN')}</span>

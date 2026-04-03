@@ -25,7 +25,7 @@ export const GET = withAuth(async (req, user) => {
 
     return NextResponse.json(dbUser, { status: 200 })
   } catch (error) {
-    console.error('[/api/user/me GET error]', error)
+    console.error('[/api/user/profile GET error]', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 })
@@ -55,7 +55,7 @@ export const PATCH = withAuth(async (req, user) => {
 
     return NextResponse.json(updatedUser)
   } catch (error) {
-    console.error('[/api/user/me PATCH error]', error)
+    console.error('[/api/user/profile PATCH error]', error)
     return NextResponse.json({ error: 'Update failed' }, { status: 500 })
   }
 })
@@ -121,7 +121,7 @@ export const DELETE = withAuth(async (req, user) => {
     return res
 
   } catch (error) {
-    console.error('[/api/user/me DELETE error]', error)
+    console.error('[/api/user/profile DELETE error]', error)
     return NextResponse.json({ error: 'Database transaction failed during cascade sweep' }, { status: 500 })
   }
 })

@@ -2,23 +2,25 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #101828; /* Modern Charcoal */
+  --foreground: #111827; /* Gray 900 */
   
-  /* UniDeal Premium Branding */
-  --brand-primary: #10B981; /* Vibrant Emerald */
-  --brand-primary-hover: #059669;
-  --brand-soft: #ECFDF5;
+  /* UniDeal Brand Color */
+  --brand-green: #16a34a; 
+  --brand-green-hover: #15803d;
+  --brand-soft: #f0fdf4;
   
   /* Semantic Grays */
-  --gray-50: #F9FAFB;
-  --gray-100: #F3F4F6;
-  --gray-200: #E5E7EB;
-  --gray-500: #667085;
-  --gray-900: #101828;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-900: #111827;
 }
 
 @theme inline {
-  --color-brand-primary: var(--brand-primary);
+  --color-brand-green: var(--brand-green);
   --color-brand-soft: var(--brand-soft);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -31,23 +33,41 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Premium Glassmorphism & Shadows */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+/* 3D Perspective Utilities */
+.perspective-1000 {
+  perspective: 1000px;
 }
 
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* Slide Down Animation */
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Premium Shadows */
 .shadow-premium {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
 .shadow-card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .shadow-card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }

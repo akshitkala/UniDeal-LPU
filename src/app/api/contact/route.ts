@@ -11,7 +11,9 @@ export async function POST(req: NextRequest) {
     // ── RATE LIMIT (3/day per IP) ───────────────────────────────────────────
     const headerList = await headers()
     const ip = headerList.get('x-forwarded-for') || 'unknown'
-    const rl = await checkRateLimit(`contact:${ip}`, 3, 86400)
+    const rl = process.env.NODE_ENV === 'development' 
+      ? { allowed: true } 
+      : await checkRateLimit(`contact:${ip}`, 3, 86400)
     
     if (!rl.allowed) {
       return NextResponse.json(

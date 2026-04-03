@@ -7,7 +7,7 @@ import Report from '@/lib/db/models/Report'
 import AdminActivity from '@/lib/db/models/AdminActivity'
 import { deleteImage } from '@/lib/utils/cloudinary'
 import redis from '@/lib/redis/client'
-import { sendListingRejected, sendListingDeleted } from '@/lib/email/resend'
+import { sendListingRejected, sendListingDeletedByAdminEmail } from '@/lib/email/resend'
 
 export const PATCH = withAdmin(async (req, user, context) => {
   try {
@@ -24,7 +24,7 @@ export const PATCH = withAdmin(async (req, user, context) => {
     const adminUser = await User.findOne({ uid: user.uid })
     if (!adminUser) return NextResponse.json({ error: 'Admin missing from DB' }, { status: 404 })
 
-    const listing = await Listing.findOne({ slug }).populate('seller', 'email')
+    const listing = await Listing.findOne({ slug }).populate('seller', 'email displayName')
     if (!listing) return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
 
     const previousStatus = listing.status
@@ -84,7 +84,7 @@ export const DELETE = withAdmin(async (req, user, context) => {
     const adminUser = await User.findOne({ uid: user.uid })
     if (!adminUser) return NextResponse.json({ error: 'Admin missing from DB' }, { status: 404 })
 
-    const listing = await Listing.findOne({ slug }).populate('seller', 'email')
+    const listing = await Listing.findOne({ slug }).populate('seller', 'email displayName')
     if (!listing) return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
 
     // Extract Cloudinary Public IDs
@@ -127,7 +127,13 @@ export const DELETE = withAdmin(async (req, user, context) => {
     await redis.del(`listing:detail:${slug}`)
 
     if (listing.seller && (listing.seller as any).email) {
-       await sendListingDeleted((listing.seller as any).email, listing.title, reason)
+       const seller = listing.seller as any
+       await sendListingDeletedByAdminEmail({
+         to: seller.email,
+         name: seller.displayName || 'Seller',
+         listing: listing.title,
+         reason: reason
+       })
     }
 
     return NextResponse.json({ success: true, message: 'Constructive removal initiated and Cloudinary swept.' })
