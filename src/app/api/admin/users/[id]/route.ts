@@ -6,6 +6,7 @@ import Listing from '@/lib/db/models/Listing'
 import AdminActivity from '@/lib/db/models/AdminActivity'
 import redis from '@/lib/redis/client'
 import { sendAccountBanned, sendAccountDeleted } from '@/lib/email/resend'
+import { invalidateBrowseCache } from '@/lib/redis/cache'
 
 export const PATCH = withAdmin(async (req, user, context) => {
   try {
@@ -70,7 +71,7 @@ export const PATCH = withAdmin(async (req, user, context) => {
     })
 
     // Flushes all global directory cache endpoints since a volume of listings just disappeared/re-appeared simultaneously
-    await redis.del('listings:browse:1:12')
+    await invalidateBrowseCache()
 
     if (action === 'ban' && targetUser.email) {
        await sendAccountBanned(targetUser.email, reason!)
@@ -140,6 +141,8 @@ export const DELETE = withAdmin(async (req, user, context) => {
     if (targetUser.email) {
        await sendAccountDeleted(targetUser.email)
     }
+
+    await invalidateBrowseCache()
 
     return NextResponse.json({ success: true, message: 'Account and all associated assets irreversibly erased.' })
   } catch (error) {

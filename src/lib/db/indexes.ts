@@ -21,9 +21,9 @@ export async function createIndexes(): Promise<void> {
   // Four-condition feed visibility filter (mandatory on EVERY public query)
   await listingColl.createIndex({
     status: 1,
+    isDeleted: 1,
     sellerBanned: 1,
     aiFlagged: 1,
-    isDeleted: 1,
   })
 
   // Category filter with visibility

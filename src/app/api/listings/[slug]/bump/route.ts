@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import Listing from '@/lib/db/models/Listing'
 import User from '@/lib/db/models/User'
 import redis from '@/lib/redis/client'
+import { invalidateBrowseCache } from '@/lib/redis/cache'
 
 export const POST = withAuth(async (req, user, context) => {
   try {
@@ -52,6 +53,7 @@ export const POST = withAuth(async (req, user, context) => {
 
     // Flush Redis Detail Cache
     await redis.del(`listing:detail:${slug}`)
+    await invalidateBrowseCache()
 
     // Compute remaining bumps and next availability
     const bumpsRemaining = 3 - listing.bumpCount

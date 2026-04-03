@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db/connect'
 import Listing from '@/lib/db/models/Listing'
 import User from '@/lib/db/models/User' // Need to populate seller
 import redis from '@/lib/redis/client'
+import { invalidateBrowseCache } from '@/lib/redis/cache'
 import { sendListingExpired } from '@/lib/email/resend'
 
 // Vercel Cron Dispatcher: 0 2 * * * (Daily at 2:00 AM)
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
     await Promise.allSettled(emailPromises)
 
     // Flush cache globally out of safe redundancy
-    await redis.del('listings:browse:1:12')
+    await invalidateBrowseCache()
 
     return NextResponse.json({ 
        success: true, 

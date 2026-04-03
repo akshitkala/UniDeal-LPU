@@ -18,7 +18,20 @@ interface Listing {
   bumpedAt?: string
   createdAt: string
   category: { name: string, slug: string }
-  seller: { displayName: string, photoURL?: string }
+  seller: { displayName: string, email: string }
+}
+
+function SkeletonCard() {
+  return (
+    <div className="rounded-2xl border border-gray-100 overflow-hidden animate-pulse bg-white">
+      <div className="aspect-square bg-gray-100" />
+      <div className="p-3 space-y-2">
+        <div className="h-3 bg-gray-100 rounded w-3/4" />
+        <div className="h-3 bg-gray-100 rounded w-1/2" />
+        <div className="h-4 bg-gray-100 rounded w-1/3 mt-2" />
+      </div>
+    </div>
+  )
 }
 
 interface Category {
@@ -100,7 +113,7 @@ function BrowseContent() {
       if (maxPrice) url.searchParams.set('maxPrice', maxPrice)
       if (sort) url.searchParams.set('sort', sort)
       if (cursor) url.searchParams.set('cursor', cursor)
-      url.searchParams.set('limit', '24')
+      url.searchParams.set('limit', '12')
 
       const res = await fetch(url.toString())
       if (!res.ok) throw new Error('Refresh failed')
@@ -127,27 +140,36 @@ function BrowseContent() {
     }
   }
 
+  // 2. Parallel Fetch: Categories + Initial Listings (Fix 10)
   useEffect(() => {
-    setListings([])
-    setNextCursor(null)
-    setLoading(true)
-    fetchListings()
-  }, [searchParams])
-
-  useEffect(() => {
-    async function fetchCategories() {
+    async function initBrowse() {
+      setLoading(true)
       try {
-        const res = await fetch('/api/categories')
-        if (res.ok) {
-          const data = await res.json()
-          setCategories(data)
+        const [catRes, listRes] = await Promise.all([
+          fetch('/api/categories'),
+          fetch(`/api/listings?limit=12${q ? `&q=${q}` : ''}${category ? `&category=${category}` : ''}${condition ? `&condition=${condition}` : ''}${minPrice ? `&minPrice=${minPrice}` : ''}${maxPrice ? `&maxPrice=${maxPrice}` : ''}${sort ? `&sort=${sort}` : ''}`)
+        ])
+
+        if (catRes.ok) {
+          const catData = await catRes.json()
+          setCategories(catData)
+        }
+
+        if (listRes.ok) {
+          const listData = await listRes.json()
+          setListings(listData.listings)
+          setTotalCount(listData.total || 0)
+          setNextCursor(listData.nextCursor)
         }
       } catch (err) {
-        console.error('Failed to fetch categories', err)
+        console.error('[Browse Init] Error:', err)
+      } finally {
+        setLoading(false)
       }
     }
-    fetchCategories()
-  }, [])
+
+    initBrowse()
+  }, [q, category, condition, minPrice, maxPrice, sort])
 
   useEffect(() => {
     const sensor = sentinelRef.current
@@ -338,8 +360,8 @@ function BrowseContent() {
 
         {loading && listings.length === 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
-            {[...Array(12)].map((_, i) => (
-               <div key={i} className="aspect-[4/5] bg-gray-50 rounded-2xl animate-pulse border border-gray-100" />
+            {Array.from({ length: 12 }).map((_, i) => (
+              <SkeletonCard key={i} />
             ))}
           </div>
         ) : listings.length === 0 ? (

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db/connect'
 import Listing from '@/lib/db/models/Listing'
@@ -5,7 +6,7 @@ import Category from '@/lib/db/models/Category'
 import User from '@/lib/db/models/User'
 import SystemConfig from '@/lib/db/models/SystemConfig'
 import redis from '@/lib/redis/client'
-import { CACHE_KEYS, invalidateFeed } from '@/lib/redis/cache'
+import { CACHE_KEYS, invalidateBrowseCache } from '@/lib/redis/cache'
 import { withAuth } from '@/lib/middleware/auth'
 import { uploadImageBuffer } from '@/lib/utils/cloudinary'
 import { browseSchema, listingSchema } from '@/lib/utils/validate'
@@ -28,7 +29,35 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid parameters', issues: parsed.error.format() }, { status: 400 })
     }
 
-    const { category, condition, minPrice, maxPrice, sort, limit, q, cursor } = parsed.data
+    const { category, condition, minPrice, maxPrice, sort, q, cursor } = parsed.data
+    const DEFAULT_LIMIT = 12
+    const MAX_LIMIT = 48
+    const limit = Math.min(
+      Number(searchParams.get('limit')) || DEFAULT_LIMIT, 
+      MAX_LIMIT
+    )
+
+    // Build cache key from all filter params (Fix 4)
+    const cacheKey = `feed:browse:${JSON.stringify({
+      category, condition, minPrice, maxPrice, sort, cursor, q, limit
+    })}`
+
+    // Check Redis Cache (Fix 4)
+    if (!q) { // only cache non-search results
+      try {
+        const cached = await redis.get(cacheKey)
+        if (cached) {
+          return NextResponse.json(cached, {
+            headers: { 
+              'X-Cache': 'HIT',
+              'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+            }
+          })
+        }
+      } catch (e) {
+        console.warn('[Redis] Cache check failed:', e)
+      }
+    }
 
     await connectDB()
 
@@ -46,8 +75,7 @@ export async function GET(req: NextRequest) {
       if (catDoc) {
         filter.category = catDoc._id
       } else {
-        // Return 0 results if slug is invalid
-        return NextResponse.json({ listings: [], nextCursor: null })
+        return NextResponse.json({ listings: [], nextCursor: null, total: 0 })
       }
     }
     if (condition) filter.condition = condition
@@ -57,54 +85,89 @@ export async function GET(req: NextRequest) {
         ...(maxPrice !== undefined ? { $lte: maxPrice } : {}),
       }
     }
-    if (q) filter.$text = { $search: q }
 
-    // ── HEADCOUNT: Calculate total matching docs (Fix 5) ───────────────────
-    const total = await Listing.countDocuments(filter)
-
-    // ── CURSOR: use _id for stable pagination (Fix 6) ───────────────────
+    // ── CURSOR: use _id for stable pagination (Fix 3) ───────────────────
     if (cursor) {
       try {
-        filter._id = { $lt: cursor }
+        filter._id = { $lt: new mongoose.Types.ObjectId(cursor) }
       } catch (e) {
-        // Invalid cursor — ignore and return first page
+        // Invalid cursor
       }
     }
 
-    // 3. Execution (Fix: Search Relevance Sort)
-    let query = Listing.find(filter)
-      .select('title price images condition category slug bumpedAt createdAt seller negotiable')
+    const CARD_PROJECTION = {
+      title: 1,
+      price: 1,
+      negotiable: 1,
+      'images': { $slice: 1 }, 
+      condition: 1,
+      category: 1,
+      slug: 1,
+      bumpedAt: 1,
+      createdAt: 1,
+      seller: 1,
+      sellerBanned: 1,
+      status: 1,
+      _id: 1,
+    }
+
+    // ── DEV ONLY: Query Plan Explanation (Fix 1) ───────────────────────
+    if (process.env.NODE_ENV === 'development') {
+      const explanation = await (Listing.find(filter) as any)
+        .explain('executionStats')
+      console.log('[Query Plan]', 
+        explanation.executionStats.executionStages.stage,
+        'docsExamined:', 
+        explanation.executionStats.totalDocsExamined,
+        'docsReturned:', 
+        explanation.executionStats.totalDocsReturned
+      )
+    }
+
+    // 3. Execution (Fix 2 & 3)
+    let listingsQuery = Listing.find(filter, CARD_PROJECTION)
       .limit(limit + 1)
-      .populate('category', 'name slug icon')
-      .populate('seller', 'displayName photoURL isLpuVerified')
+      .populate('category', 'name slug')
+      .populate('seller', 'displayName email')
       .lean()
 
     if (q) {
-      // Add text score projection and sort by relevance when searching
-      query = (query as any).select({ score: { $meta: 'textScore' } })
+      filter.$text = { $search: q }
+      listingsQuery = listingsQuery.select({ score: { $meta: 'textScore' } })
         .sort({ score: { $meta: 'textScore' } })
     } else {
-      // Normal sort by bump/date when not searching
-      query = (query as any).sort({ bumpedAt: -1, _id: -1 })
+      listingsQuery = listingsQuery.sort({ bumpedAt: -1, createdAt: -1 })
     }
 
-    const listings = await query
+    const [listings, total] = await Promise.all([
+      listingsQuery,
+      Listing.countDocuments(filter)
+    ])
 
-    const hasNext = listings.length > limit
-    const data = hasNext ? listings.slice(0, -1) : listings
-    
-    // Construct Next Cursor
-    let nextCursor = null
-    if (hasNext && data.length > 0) {
-      nextCursor = data[data.length - 1]._id.toString()
+    const hasMore = listings.length > limit
+    const data = hasMore ? listings.slice(0, limit) : listings
+    const nextCursor = hasMore ? data[data.length - 1]._id.toString() : null
+
+    const result = { listings: data, nextCursor, total }
+
+    // Write to Redis (Fix 4)
+    if (!q) {
+      redis.set(cacheKey, result, { ex: 60 }).catch(() => {})
     }
 
-    return NextResponse.json({ listings: data, nextCursor, total })
+    // 4. Response with HTTP Headers (Fix 5)
+    const headers: Record<string, string> = { 'X-Cache': 'MISS' }
+    if (!q) {
+      headers['Cache-Control'] = 'public, s-maxage=30, stale-while-revalidate=60'
+    }
+
+    return NextResponse.json(result, { headers })
   } catch (error) {
     console.error('[/api/listings GET error]', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
+
 
 /**
  * POST: Create Listing with MAGIC BYTE PROTECTION (Fix 14) and Strict Validation (Fix 3).
@@ -199,7 +262,7 @@ export const POST = withAuth(async (req, user) => {
 
     // Save first — never blocks the response
     await newListing.save()
-    await invalidateFeed()
+    await invalidateBrowseCache()
 
     // 6. Fire-and-forget AI Check (Fix 7) & Policy Enforcement
     const checkAI = async () => {
@@ -229,7 +292,7 @@ export const POST = withAuth(async (req, user) => {
 
         if (shouldApprove) {
           updateData.status = 'approved'
-          await invalidateFeed()
+          await invalidateBrowseCache()
         }
 
         await Listing.findByIdAndUpdate(newListing._id, updateData)

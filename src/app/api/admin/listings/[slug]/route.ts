@@ -8,6 +8,7 @@ import AdminActivity from '@/lib/db/models/AdminActivity'
 import { deleteImage } from '@/lib/utils/cloudinary'
 import redis from '@/lib/redis/client'
 import { sendListingRejected, sendListingDeletedByAdminEmail } from '@/lib/email/resend'
+import { invalidateBrowseCache } from '@/lib/redis/cache'
 
 export const PATCH = withAdmin(async (req, user, context) => {
   try {
@@ -54,7 +55,7 @@ export const PATCH = withAdmin(async (req, user, context) => {
 
     // Flush Browse Cache (if approved, it hits feed)
     if (action === 'approve') {
-       await redis.del('listings:browse:1:12')
+       await invalidateBrowseCache()
     }
     // Flush specific listing detail cache
     await redis.del(`listing:detail:${slug}`)
@@ -123,7 +124,7 @@ export const DELETE = withAdmin(async (req, user, context) => {
     })
 
     // Flush Cache
-    await redis.del('listings:browse:1:12')
+    await invalidateBrowseCache()
     await redis.del(`listing:detail:${slug}`)
 
     if (listing.seller && (listing.seller as any).email) {

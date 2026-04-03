@@ -1,7 +1,8 @@
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'
+import { useRef } from 'react'
 
 export interface ListingCardProps {
   listing: {
@@ -23,8 +24,22 @@ export interface ListingCardProps {
 }
 
 export function ListingCard({ listing, showSeller = true, actions, priority = false }: ListingCardProps) {
+  const router = useRouter()
+  const prefetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const imageUrl = listing.images?.[0] 
   
+  const handleMouseEnter = () => {
+    prefetchTimer.current = setTimeout(() => {
+      router.prefetch(`/listing/${listing.slug}`)
+    }, 200)
+  }
+
+  const handleMouseLeave = () => {
+    if (prefetchTimer.current) {
+      clearTimeout(prefetchTimer.current)
+    }
+  }
+
   const getConditionStyles = (condition?: string) => {
     if (!condition) return 'bg-gray-50 text-gray-700'
     switch (condition.toLowerCase()) {
@@ -44,8 +59,10 @@ export function ListingCard({ listing, showSeller = true, actions, priority = fa
 
   return (
     <div className="h-full flex flex-col">
-      <Link 
-        href={`/listing/${listing.slug}`}
+      <div 
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => router.push(`/listing/${listing.slug}`)}
         className="group rounded-2xl bg-white border border-gray-100 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden flex flex-col flex-1"
       >
         {/* Image Area */}
@@ -56,6 +73,7 @@ export function ListingCard({ listing, showSeller = true, actions, priority = fa
               alt={listing.title} 
               fill
               priority={priority}
+              loading={priority ? undefined : 'lazy'}
               className="object-contain p-2 sm:p-4 w-full h-full group-hover:scale-105 transition-transform duration-500" 
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
@@ -111,7 +129,7 @@ export function ListingCard({ listing, showSeller = true, actions, priority = fa
             </div>
           )}
         </div>
-      </Link>
+      </div>
 
       {actions && (
         <div className="px-3 pb-4">

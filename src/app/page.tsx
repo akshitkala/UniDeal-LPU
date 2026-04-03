@@ -7,7 +7,9 @@ import {
   ArrowRight, 
   ChevronRight, 
   PackageCheck,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle2,
+  Zap
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ListingCard } from '@/components/listing/ListingCard'
@@ -69,77 +71,86 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       
-      {/* HERO SECTION: Redesigned (Fix: Simple & Clean) */}
-      <section className="w-full bg-[#f0f6f0] pt-20 pb-16 sm:pt-28 sm:pb-20 lg:pt-32 lg:pb-24">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          
-          {/* Status Badge */}
-          <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 shadow-sm mb-8 mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <span className="w-2 h-2 bg-[#16a34a] rounded-full" />
-            Campus Marketplace
-          </div>
-          
-          {/* Main Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight tracking-tight mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            Buy and sell on campus.
-          </h1>
-          
-          {/* Context Subheadline */}
-          <p className="text-base sm:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto mb-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            List what you have. Find what you need. <br className="hidden sm:block" />
-            Connect directly on WhatsApp.
-          </p>
-          
-          {/* Main CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <Link 
-              href="/browse" 
-              className="bg-[#16a34a] text-white rounded-full h-12 px-8 font-semibold text-sm flex items-center justify-center hover:bg-green-700 transition-all active:scale-95"
-            >
-              Browse listings
-            </Link>
-            <Link 
-              href="/post" 
-              className="bg-white text-gray-900 border border-gray-200 rounded-full h-12 px-8 font-semibold text-sm flex items-center justify-center hover:bg-gray-50 transition-all active:scale-95"
-            >
-              Start selling →
-            </Link>
-          </div>
-
-          {/* Real-time Stats Row (Fix: Fetches dynamic data) */}
-          {(loadingStats || stats) && (
-            <div className="pt-10 border-t border-gray-200/60 flex flex-wrap items-center justify-center gap-8 sm:gap-12 animate-in fade-in duration-1000 delay-300">
-              {/* Stat 1: Listings */}
-              <div className="flex flex-col flex-1 sm:flex-none min-w-[100px]">
-                {loadingStats ? (
-                  <div className="w-16 h-6 bg-gray-200 animate-pulse rounded mx-auto" />
-                ) : (
-                  <span className="text-2xl font-bold text-gray-900">{stats?.activeListings} listings</span>
-                )}
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Market Activity</span>
+      {/* HIGH-FIDELITY HERO SECTION */}
+      <section className="w-full bg-white pt-12 pb-20 lg:pt-20 lg:pb-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+            
+            {/* Left Column: Premium Typography & CTAs */}
+            <div className="flex flex-col items-start text-left max-w-2xl mx-auto lg:mx-0">
+              
+              {/* Trust Badge */}
+              <div className="inline-flex items-center gap-2 bg-[#dcfce7] text-[#166534] px-4 py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Exclusively for university students
               </div>
-
-              <div className="hidden sm:block h-8 w-px bg-gray-200" />
-
-              {/* Stat 2: Students */}
-              <div className="flex flex-col flex-1 sm:flex-none min-w-[100px]">
-                {loadingStats ? (
-                  <div className="w-16 h-6 bg-gray-200 animate-pulse rounded mx-auto" />
-                ) : (
-                  <span className="text-2xl font-bold text-gray-900">{stats?.totalUsers} students</span>
-                )}
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Verified Users</span>
-              </div>
-
-              <div className="hidden sm:block h-8 w-px bg-gray-200" />
-
-              {/* Stat 3: Pricing */}
-              <div className="flex flex-col flex-1 sm:flex-none min-w-[100px]">
-                <span className="text-2xl font-bold text-gray-900">Free</span>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Always</span>
+              
+              {/* Dynamic Headline */}
+              <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-gray-900 leading-[0.95] tracking-tight mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                Buy and sell <br />
+                on <span className="text-[#16a34a] italic">campus.</span>
+              </h1>
+              
+              {/* Social Proof Subheadline */}
+              <p className="text-lg sm:text-xl text-gray-500 leading-relaxed max-w-lg mb-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                List what you have. Find what you need. Connect directly on WhatsApp. 
+                The safest way to trade with your peers.
+              </p>
+              
+              {/* High-Fidelity CTAs */}
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <Link 
+                  href="/browse" 
+                  className="bg-[#064e3b] hover:bg-emerald-900 text-white rounded-2xl h-16 px-10 font-bold text-lg flex items-center justify-center transition-all shadow-xl shadow-emerald-900/10 active:scale-95 whitespace-nowrap"
+                >
+                  Browse listings
+                </Link>
+                <Link 
+                  href="/post" 
+                  className="bg-white hover:bg-gray-50 text-[#064e3b] border border-gray-100 rounded-2xl h-16 px-10 font-bold text-lg flex items-center justify-center transition-all shadow-sm active:scale-95 whitespace-nowrap"
+                >
+                  Start selling
+                </Link>
               </div>
             </div>
-          )}
+
+            {/* Right Column: Premium Visual & Stats */}
+            <div className="relative w-full aspect-square sm:aspect-video lg:aspect-[4/5] animate-in fade-in slide-in-from-right-8 duration-1000">
+              
+              {/* Main Rounded Image */}
+              <div className="relative w-full h-full rounded-[3rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] border-8 border-white">
+                <Image 
+                  src="/images/hero/students.png" 
+                  alt="Students on campus" 
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                
+                {/* Visual Overlay for Depth */}
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/20 to-transparent pointer-events-none" />
+              </div>
+
+              {/* Floating Real-time Stats Card */}
+              {stats && (
+                <div className="absolute -bottom-6 -left-6 lg:-left-12 bg-white p-5 sm:p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex items-center gap-4 sm:gap-5 border border-gray-50/50 animate-in fade-in zoom-in-95 duration-700 delay-500">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#22c55e] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-500/30">
+                    <Zap className="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
+                  </div>
+                  <div className="flex flex-col pr-4 sm:pr-8">
+                    <span className="text-gray-900 font-bold text-sm sm:text-base leading-tight">Fresh deals daily</span>
+                    <span className="text-gray-400 font-medium text-[10px] sm:text-xs">
+                      {stats.activeListings}+ items available now
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Decorative Background Glow */}
+              <div className="absolute -top-12 -right-12 w-64 h-64 bg-green-100 rounded-full blur-[100px] -z-10 opacity-60" />
+            </div>
+
+          </div>
         </div>
       </section>
 

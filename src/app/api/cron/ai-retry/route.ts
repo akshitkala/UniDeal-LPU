@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db/connect'
 import Listing from '@/lib/db/models/Listing'
 import Category from '@/lib/db/models/Category'
 import redis from '@/lib/redis/client'
+import { invalidateBrowseCache } from '@/lib/redis/cache'
 import { checkListingAI } from '@/lib/ai/checkListing'
 
 // Vercel Cron Dispatcher: */30 * * * * (Every 30 mins)
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
     await Promise.allSettled(updatePromises)
 
     if (clearedCount > 0) {
-      await redis.del('listings:browse:1:12')
+      await invalidateBrowseCache()
     }
 
     return NextResponse.json({ 

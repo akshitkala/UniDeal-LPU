@@ -12,16 +12,17 @@ export const CACHE_KEYS = {
 
 /**
  * Invalidate all browse feed caches.
- * Should be called whenever a listing is: Created, Approved, Deleted, or Sold.
+ * Should be called whenever a listing is: Created, Approved, Deleted, Sold, or Expired.
+ * Also when a user is banned or a listing is bumped.
  */
-export async function invalidateFeed() {
+export async function invalidateBrowseCache() {
   try {
     const keys = await redis.keys('feed:browse:*')
     if (keys.length > 0) {
       await redis.del(...keys)
     }
   } catch (err) {
-    console.error('[Redis Invalidate Feed Error]', err)
+    console.error('[Redis] Cache invalidation failed:', err)
   }
 }
 
@@ -31,7 +32,7 @@ export async function invalidateFeed() {
 export async function invalidateListing(slug: string) {
   try {
     await redis.del(CACHE_KEYS.LISTING(slug))
-    await invalidateFeed() // Most listing changes affect the feed
+    await invalidateBrowseCache() // Most listing changes affect the feed
   } catch (err) {
     console.error('[Redis Invalidate Listing Error]', err)
   }
