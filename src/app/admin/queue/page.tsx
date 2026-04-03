@@ -17,7 +17,10 @@ export default function ModerationQueue() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [listings, setListings] = useState<any[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
 
   const [modalConfig, setModalConfig] = useState<{
@@ -35,31 +38,52 @@ export default function ModerationQueue() {
     return () => clearTimeout(timer)
   }, [search])
 
-  const fetchQueue = async () => {
-    setLoading(true)
+  const fetchQueue = async (pageNum: number = 1, append: boolean = false) => {
+    if (append) setLoadingMore(true)
+    else setLoading(true)
+
     try {
       const params = new URLSearchParams({
         status,
         aiFlag,
         sort,
-        q: debouncedSearch
+        q: debouncedSearch,
+        page: pageNum.toString(),
+        limit: '20'
       })
       const res = await fetch(`/api/admin/listings?${params.toString()}`)
       const data = await res.json()
       if (res.ok) {
-        setListings(data.listings)
+        if (append) {
+          setListings(prev => {
+            const existingIds = new Set(prev.map(l => l._id))
+            const newItems = data.listings.filter((l: any) => !existingIds.has(l._id))
+            return [...prev, ...newItems]
+          })
+        } else {
+          setListings(data.listings)
+          setTotalCount(data.pagination.total)
+        }
         setError(null)
       }
     } catch {
       setError('Failed to load listings.')
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
 
   useEffect(() => {
-    fetchQueue()
+    setPage(1)
+    fetchQueue(1, false)
   }, [status, aiFlag, sort, debouncedSearch])
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchQueue(nextPage, true)
+  }
 
   const handleAction = async () => {
     if (!modalConfig.slug) return
@@ -83,7 +107,8 @@ export default function ModerationQueue() {
          setModalConfig({ isOpen: false, type: 'approve', slug: null, title: '' })
          setReasonInput('')
          setError(null)
-         fetchQueue()
+         setPage(1)
+         fetchQueue(1, false)
       } else {
          const data = await res.json()
          setError(data.error || 'Action failed.')
@@ -268,6 +293,28 @@ export default function ModerationQueue() {
                 ))}
               </tbody>
             </table>
+            
+            {listings.length < totalCount && (
+              <div className="p-4 border-t border-gray-100 flex justify-center">
+                 <button 
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="h-10 px-6 bg-white border border-gray-200 rounded-full text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-2 disabled:opacity-50"
+                 >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        Load More ({totalCount - listings.length} remaining)
+                        <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                      </>
+                    )}
+                 </button>
+              </div>
+            )}
           </div>
         )}
       </div>

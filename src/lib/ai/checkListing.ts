@@ -34,7 +34,7 @@ async function checkGeminiAlignment(title: string, description: string, price: n
   if (!key) throw new Error('API Key Missing')
   
   const ai = new GoogleGenerativeAI(key)
-  const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' })
   
   const prompt = `
     MODERATOR PROMPT:

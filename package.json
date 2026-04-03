@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "npx tsx --env-file=.env.local scripts/seed.ts",
-    "seed:large": "npx tsx --env-file=.env.local scripts/seed-large.ts"
+    "seed:large": "npx tsx --env-file=.env.local scripts/seed-large.ts",
+    "test:moderation": "npx tsx --env-file=.env.local scripts/test-moderation.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

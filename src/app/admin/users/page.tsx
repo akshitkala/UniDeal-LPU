@@ -17,8 +17,10 @@ export default function UsersManagement() {
   const [users, setUsers] = useState<any[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
   
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
 
@@ -32,27 +34,48 @@ export default function UsersManagement() {
   const [reasonInput, setReasonInput] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true)
+  const fetchUsers = useCallback(async (pageNum: number = 1, append: boolean = false) => {
+    if (append) setLoadingMore(true)
+    else setLoading(true)
+
     try {
       const params = new URLSearchParams(searchParams)
+      params.set('page', pageNum.toString())
+      params.set('limit', '50')
+
       const res = await fetch(`/api/admin/users?${params.toString()}`)
       if (res.ok) {
         const data = await res.json()
-        setUsers(data.users)
-        setTotalCount(data.total)
+        if (append) {
+          setUsers(prev => {
+            const existingIds = new Set(prev.map(u => u._id))
+            const newItems = data.users.filter((u: any) => !existingIds.has(u._id))
+            return [...prev, ...newItems]
+          })
+        } else {
+          setUsers(data.users)
+          setTotalCount(data.total)
+        }
         setError(null)
       }
     } catch {
       setError('Failed to load users.')
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }, [searchParams])
 
   useEffect(() => {
-    fetchUsers()
+    setPage(1)
+    fetchUsers(1, false)
   }, [fetchUsers])
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchUsers(nextPage, true)
+  }
 
   const updateParams = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams)
@@ -63,6 +86,7 @@ export default function UsersManagement() {
         params.set(key, value)
       }
     })
+    params.delete('page') // Reset page on filter change
     router.push(`${pathname}?${params.toString()}`)
   }
 
@@ -107,7 +131,8 @@ export default function UsersManagement() {
          setModalConfig({ isOpen: false, type: 'ban', id: null, displayName: '' })
          setReasonInput('')
          setError(null)
-         fetchUsers()
+         fetchUsers(1, false)
+         setPage(1)
          setTimeout(() => setSuccessMessage(null), 3000)
       } else {
          setError(data.error || 'Action failed')
@@ -192,7 +217,7 @@ export default function UsersManagement() {
 
       {/* Main Table Container */}
       <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden min-h-[400px]">
-        {loading ? (
+        {loading && users.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-50">
              <Loader2 className="w-8 h-8 text-[#16a34a] animate-spin" />
              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Syncing...</span>
@@ -305,6 +330,28 @@ export default function UsersManagement() {
                 ))}
               </tbody>
             </table>
+            
+            {users.length < totalCount && (
+              <div className="p-4 border-t border-gray-100 flex justify-center">
+                 <button 
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="h-10 px-6 bg-white border border-gray-200 rounded-full text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-2 disabled:opacity-50"
+                 >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        Load More ({totalCount - users.length} remaining)
+                        <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                      </>
+                    )}
+                 </button>
+              </div>
+            )}
           </div>
         )}
       </div>

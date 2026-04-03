@@ -36,27 +36,51 @@ interface ContactMessage {
 
 export default function AdminContactsPage() {
   const [messages, setMessages] = useState<ContactMessage[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'open' | 'resolved'>('open')
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  const fetchMessages = async (status: string) => {
-    setLoading(true)
+  const fetchMessages = async (status: string, cursor: string | null = null) => {
+    if (cursor) setLoadingMore(true)
+    else setLoading(true)
     try {
-      const res = await fetch(`/api/admin/contacts?status=${status}`)
+      const url = new URL(`/api/admin/contacts`, window.location.origin)
+      url.searchParams.set('status', status)
+      if (cursor) url.searchParams.set('cursor', cursor)
+
+      const res = await fetch(url.toString())
       const data = await res.json()
-      setMessages(data.messages || [])
+      if (cursor) {
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(m => m._id))
+          const newItems = data.messages.filter((m: any) => !existingIds.has(m._id))
+          return [...prev, ...newItems]
+        })
+      } else {
+        setMessages(data.messages || [])
+      }
+      setNextCursor(data.nextCursor)
     } catch (err) {
       console.error(err)
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
 
   useEffect(() => {
+    setNextCursor(null)
     fetchMessages(activeTab)
   }, [activeTab])
+
+  const handleLoadMore = () => {
+    if (nextCursor) {
+      fetchMessages(activeTab, nextCursor)
+    }
+  }
 
   const handleResolve = async (id: string) => {
     setActionLoading(id)
@@ -111,7 +135,7 @@ export default function AdminContactsPage() {
         
         {/* Contact List */}
         <div className="w-full lg:w-80 flex flex-col gap-3 overflow-y-auto pr-2 no-scrollbar shrink-0">
-           {loading ? (
+           {loading && messages.length === 0 ? (
              <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-50">
                 <Loader2 className="w-8 h-8 text-[#16a34a] animate-spin" />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Syncing...</span>
@@ -122,29 +146,48 @@ export default function AdminContactsPage() {
                 <p className="text-sm font-semibold text-gray-400">No messages found</p>
              </div>
            ) : (
-             messages.map(m => (
-               <button 
-                 key={m._id}
-                 onClick={() => setSelectedId(m._id)}
-                 className={cn(
-                    "p-4 rounded-xl border text-left transition-all relative group",
-                    selectedId === m._id 
-                      ? 'bg-white border-[#16a34a] shadow-sm ring-1 ring-[#16a34a10]' 
-                      : 'bg-white border-transparent hover:border-gray-200'
-                 )}
-               >
-                  <div className="flex justify-between items-start mb-2">
-                     <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-wider px-2 py-0.5 bg-indigo-50 rounded">
-                        {m.subject.replace('_', ' ')}
-                     </span>
-                     <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">
-                        {formatDistanceToNow(new Date(m.createdAt))} ago
-                     </span>
-                  </div>
-                  <div className="font-semibold text-gray-900 text-sm truncate">{m.name}</div>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-1 font-medium italic">"{m.message}"</p>
-               </button>
-             ))
+             <>
+               {messages.map(m => (
+                 <button 
+                   key={m._id}
+                   onClick={() => setSelectedId(m._id)}
+                   className={cn(
+                      "p-4 rounded-xl border text-left transition-all relative group",
+                      selectedId === m._id 
+                        ? 'bg-white border-[#16a34a] shadow-sm ring-1 ring-[#16a34a10]' 
+                        : 'bg-white border-transparent hover:border-gray-200'
+                   )}
+                 >
+                    <div className="flex justify-between items-start mb-2">
+                       <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-wider px-2 py-0.5 bg-indigo-50 rounded">
+                          {m.subject.replace('_', ' ')}
+                       </span>
+                       <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">
+                          {formatDistanceToNow(new Date(m.createdAt))} ago
+                       </span>
+                    </div>
+                    <div className="font-semibold text-gray-900 text-sm truncate">{m.name}</div>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-1 font-medium italic">"{m.message}"</p>
+                 </button>
+               ))}
+
+               {nextCursor && (
+                 <button 
+                   onClick={handleLoadMore}
+                   disabled={loadingMore}
+                   className="py-4 text-xs font-bold text-[#16a34a] hover:text-[#15803d] flex items-center justify-center gap-2 disabled:opacity-50"
+                 >
+                   {loadingMore ? (
+                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                   ) : (
+                     <>
+                        Load More
+                        <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                     </>
+                   )}
+                 </button>
+               )}
+             </>
            )}
         </div>
 

@@ -1,7 +1,8 @@
 import { Resend } from 'resend'
 
 const resendRaw = new Resend(process.env.RESEND_API_KEY || 'dummy_key')
-const FROM_EMAIL = 'UniDeal <noreply@unideal.app>' 
+const RESEND_DOMAIN = process.env.RESEND_DOMAIN || 'unideal.app'
+const FROM_EMAIL = `UniDeal <noreply@${RESEND_DOMAIN}>` 
 
 async function trySend(payload: any) {
   if (!process.env.RESEND_API_KEY) {

@@ -9,27 +9,49 @@ import { cn } from '@/lib/utils'
 
 export default function AuditLog() {
   const [logs, setLogs] = useState<any[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchAudit = async () => {
+  const fetchAudit = async (pageNum: number = 1, append: boolean = false) => {
+    if (append) setLoadingMore(true)
+    else setLoading(true)
+    
     try {
-      const res = await fetch('/api/admin/audit')
+      const res = await fetch(`/api/admin/audit?page=${pageNum}&limit=50`)
       if (res.ok) {
         const data = await res.json()
-        setLogs(data.logs)
+        if (append) {
+          setLogs(prev => {
+            const existingIds = new Set(prev.map(l => l._id))
+            const newItems = data.logs.filter((l: any) => !existingIds.has(l._id))
+            return [...prev, ...newItems]
+          })
+        } else {
+          setLogs(data.logs)
+          setTotalCount(data.pagination.total)
+        }
         setError(null)
       }
     } catch {
       setError('Failed to load audit data.')
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
 
   useEffect(() => {
-    fetchAudit()
+    fetchAudit(1, false)
   }, [])
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchAudit(nextPage, true)
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
@@ -46,7 +68,7 @@ export default function AuditLog() {
       )}
 
       <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden min-h-[400px]">
-        {loading ? (
+        {loading && logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-50">
              <Loader2 className="w-8 h-8 text-[#16a34a] animate-spin" />
              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Syncing...</span>
@@ -118,6 +140,28 @@ export default function AuditLog() {
                 })}
               </tbody>
             </table>
+
+            {logs.length < totalCount && (
+              <div className="p-4 border-t border-gray-100 flex justify-center">
+                 <button 
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="h-10 px-6 bg-white border border-gray-200 rounded-full text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-2 disabled:opacity-50"
+                 >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        Load More ({totalCount - logs.length} remaining)
+                        <Database className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                 </button>
+              </div>
+            )}
           </div>
         )}
       </div>
