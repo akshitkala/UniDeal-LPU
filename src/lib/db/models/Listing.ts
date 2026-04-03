@@ -35,6 +35,7 @@ export interface IListing extends Document {
   lastBumpAt?: Date
   expiresAt: Date          // createdAt/bumpedAt + 60 days
   isExpired: boolean
+  soldAt?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -95,6 +96,7 @@ const ListingSchema = new Schema<IListing>(
       default: () => new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
     },
     isExpired: { type: Boolean, default: false },
+    soldAt: { type: Date },
   },
   { timestamps: true }
 )

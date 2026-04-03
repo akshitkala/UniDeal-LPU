@@ -32,19 +32,16 @@ export const GET = withAuth(async (req, user) => {
     if (statusTab === 'active') {
       filter.status = 'approved'
       filter.aiFlagged = false
-      filter.sellerBanned = false
       filter.isExpired = false
-    } else if (statusTab === 'pending') {
-      filter.status = 'pending'
-      filter.aiFlagged = false
-    } else if (statusTab === 'blocked') {
-      // Anything that is flagged or explicitly blocked
+    } else if (statusTab === 'review') {
       filter.$or = [
-        { aiFlagged: true },
-        { status: 'rejected' },
-        { isExpired: true },
-        { sellerBanned: true }
+        { status: 'pending', aiFlagged: false },
+        { status: 'approved', aiFlagged: true }
       ]
+    } else if (statusTab === 'rejected') {
+      filter.status = 'rejected'
+    } else if (statusTab === 'sold') {
+      filter.status = 'sold'
     }
 
     // ── CURSOR: use createdAt + _id for stable sorting in Dashboard ────────

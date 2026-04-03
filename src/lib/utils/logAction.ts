@@ -17,7 +17,9 @@ type ActionType =
   | 'MAINTENANCE_TOGGLED'
   | 'NEW_LISTINGS_TOGGLED'
   | 'CONFIG_UPDATED'
-  | 'USER_CASCADE_DELETE';
+  | 'USER_CASCADE_DELETE'
+  | 'LISTING_SOLD'
+  | 'LISTING_DELETED';
 
 /**
  * Standardised audit logging for AdminActivity.

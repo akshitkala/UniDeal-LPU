@@ -1,166 +1,188 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
-import { 
-  Heart, 
-  Target, 
-  Users, 
-  Sparkles, 
-  ChevronRight, 
-  History,
-  Rocket,
-  ShieldCheck,
-  CheckCircle2,
-  ArrowRight
-} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function AboutPage() {
   return (
-    <div className="flex flex-col gap-16 lg:gap-24 pb-20">
+    <div className="max-w-2xl mx-auto px-4 py-16 sm:py-24 font-serif">
       
-      {/* Hero Section */}
-      <section className="relative h-[60vh] sm:h-[70vh] flex items-center justify-center overflow-hidden bg-gray-900">
-        <Image 
-          src="/images/about/campus.png" 
-          alt="LPU Campus" 
-          fill 
-          className="object-cover opacity-50 transition-transform duration-1000"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/20 to-transparent" />
-        
-        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center space-y-6 flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest">
-             <Sparkles className="w-3 h-3 text-yellow-400" /> Our Origin Story
-          </div>
-          <h1 className="text-3xl md:text-4xl xl:text-5xl font-bold text-white tracking-tight leading-tight">
-             Building a better <br className="hidden sm:block" /> campus marketplace.
-          </h1>
-          <p className="text-gray-300 max-w-xl text-sm sm:text-base font-medium leading-relaxed">
-             UniDeal was born from a simple realization: finding affordable campus essentials shouldn't be a struggle. We built this for the LPU community.
-          </p>
+      {/* OPENING */}
+      <div className="mb-10">
+        <span className="text-xs font-semibold text-green-600 uppercase tracking-widest block mb-5">
+          How it all started
+        </span>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
+          It wasn&apos;t a startup idea at first.
+          <br />
+          <span className="text-2xl sm:text-3xl font-normal text-gray-400">
+            It was just something I kept noticing.
+          </span>
+        </h1>
+      </div>
+
+      {/* SECTION 1: THE ALMIRAH */}
+      <div className="text-base leading-8 text-gray-600">
+        <p className="mb-7">
+          Every semester ended the same way — my almirah getting more crowded.
+        </p>
+        <p className="mb-7">
+          Books from previous subjects. Lab instruments. Notes. Random essentials. Things I once needed badly were now just lying there, untouched.
+        </p>
+        <p className="mb-7">
+          And I knew this wasn&apos;t just me. Every student goes through the same cycle.
+        </p>
+
+        <div className="mt-10 mb-10 pl-5 border-l-2 border-green-500 text-lg sm:text-xl font-semibold text-gray-800 leading-9 italic">
+          &ldquo;Buy. Use. Forget. Repeat.&rdquo;
         </div>
-      </section>
+      </div>
 
-      {/* Mission Section */}
-      <section className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-        <div className="relative">
-          <div className="relative aspect-[4/5] rounded-xl overflow-hidden border border-gray-100 shadow-sm">
-            <Image 
-               src="/images/about/founder.png" 
-               alt="Founder of UniDeal" 
-               fill 
-               className="object-cover" 
-            />
-          </div>
-          <div className="absolute -bottom-4 -right-4 h-24 w-24 bg-white rounded-xl p-4 shadow-lg border border-gray-100 flex flex-col items-center justify-center text-center">
-               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Est.<br/>2024</span>
-          </div>
-        </div>
+      {/* SECTION 2: THE WHATSAPP WALL */}
+      <hr className="border-gray-100 my-10" />
+      
+      <div className="text-base leading-8 text-gray-600">
+        <p className="mb-7">
+          At the same time, my WhatsApp was full of messages like:
+        </p>
 
-        <div className="flex flex-col gap-8">
-          <div className="space-y-3">
-            <h2 className="text-[10px] font-bold text-[#16a34a] uppercase tracking-widest">Our Mission</h2>
-            <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 leading-tight">
-               Sustainable commerce for every student.
-            </h3>
+        <div className="mt-4 mb-6 ml-4 flex flex-col gap-3">
+          <div className="bg-gray-50 rounded-2xl px-4 py-3 text-sm text-gray-500 w-fit max-w-xs font-medium">
+            &ldquo;Does anyone need this book?&rdquo;
           </div>
-
-          <div className="space-y-4 text-sm sm:text-base text-gray-500 leading-relaxed font-medium">
-             <p>
-               Every semester, thousands of textbooks, lab kits, and dorm essentials are left behind. At the same time, new students face the high costs of university life.
-             </p>
-             <p>
-               UniDeal provides a dedicated, safe space for LPU students to connect. By recycling resources within our community, we help students save money and reduce waste.
-             </p>
+          <div className="bg-gray-50 rounded-2xl px-4 py-3 text-sm text-gray-500 w-fit max-w-xs font-medium">
+            &ldquo;Selling my lab manual, DM if interested&rdquo;
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
-             <div className="flex gap-3 items-center">
-                <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-[#16a34a]">
-                   <Target className="w-5 h-5" />
-                </div>
-                <div>
-                   <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wide">Focused</h4>
-                   <p className="text-[11px] text-gray-500">Exclusively for LPU students.</p>
-                </div>
-             </div>
-             <div className="flex gap-3 items-center">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                   <Users className="w-5 h-5" />
-                </div>
-                <div>
-                   <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wide">Community</h4>
-                   <p className="text-[11px] text-gray-500">Built on trust and mutual aid.</p>
-                </div>
-             </div>
+          <div className="bg-gray-50 rounded-2xl px-4 py-3 text-sm text-gray-500 w-fit max-w-xs font-medium">
+            &ldquo;Anyone want my Physics notes? ₹50 only&rdquo;
           </div>
         </div>
-      </section>
 
-      {/* Values Section */}
-      <section className="bg-gray-50/50 py-20 border-y border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col gap-12">
-          <div className="flex flex-col items-center text-center gap-2">
-             <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Our Values</h2>
-             <h3 className="text-xl lg:text-2xl font-semibold text-gray-900">What we believe in.</h3>
-          </div>
+        <p className="mb-7">
+          But most of these messages went nowhere.
+        </p>
+        <p className="mb-7">
+          No replies. No proper reach. No real transaction.
+        </p>
+        <p className="mb-7">
+          Not because people didn&apos;t need those things — but because there was no place where students actually looked for them.
+        </p>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             {[
-               {
-                 title: 'Safety',
-                 desc: 'Every user is verified via campus credentials for a secure experience.',
-                 icon: ShieldCheck,
-                 color: 'emerald'
-               },
-               {
-                 title: 'Sustainability',
-                 desc: 'We promote a circular economy to reduce campus environmental impact.',
-                 icon: Heart,
-                 color: 'rose'
-               },
-               {
-                 title: 'Accessibility',
-                 desc: 'Making university life more affordable for every student.',
-                 icon: Sparkles,
-                 color: 'blue'
-               }
-             ].map((item, i) => (
-                <div key={i} className="p-8 bg-white border border-gray-100 rounded-xl shadow-sm">
-                   <div className={cn(
-                      "w-12 h-12 rounded-lg flex items-center justify-center mb-6",
-                      item.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' : 
-                      item.color === 'rose' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'
-                   )}>
-                      <item.icon className="w-6 h-6" />
-                   </div>
-                   <h4 className="text-base font-semibold text-gray-900 mb-2">{item.title}</h4>
-                   <p className="text-sm text-gray-500 font-medium leading-relaxed">{item.desc}</p>
-                </div>
-             ))}
-          </div>
+      {/* SECTION 3: THE OTHER SIDE */}
+      <hr className="border-gray-100 my-10" />
+
+      <div className="text-base leading-8 text-gray-600">
+        <div className="text-base font-semibold text-gray-900 mb-5">
+          And then there was the other side.
         </div>
-      </section>
+        <p className="mb-7">
+          There were days when I needed something urgently. A book for a subject starting next week. A lab instrument I forgot to buy. Something small, but necessary.
+        </p>
+        <p className="mb-7">
+          And the only option?
+        </p>
+        <div className="text-base font-semibold text-gray-800 my-3">
+          Buy it brand new.
+        </div>
+        <p className="mb-7">
+          Even when I knew — somewhere on the same campus, someone probably had the exact same thing. Just lying unused.
+        </p>
+        <p className="mb-7">
+          But there was no way to find them. No quick search. No trusted platform. No system. Just guesswork and luck.
+        </p>
+      </div>
 
-      {/* CTA Section */}
-      <section className="max-w-7xl mx-auto px-4 w-full">
-         <div className="bg-[#16a34a] rounded-xl p-8 sm:p-16 flex flex-col items-center text-center gap-8 shadow-lg shadow-green-100">
-            <h3 className="text-xl sm:text-3xl font-bold text-white tracking-tight max-w-lg">
-               Join the campus marketplace today.
-            </h3>
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-               <Link href="/browse" className="h-11 px-8 bg-white text-[#16a34a] rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition-all">
-                  Browse products
-               </Link>
-               <Link href="/post" className="h-11 px-8 bg-[#15803d] text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#14532d] transition-all border border-white/10">
-                  Start selling
-               </Link>
+      {/* SECTION 4: THE REALISATION */}
+      <hr className="border-gray-100 my-10" />
+
+      <div className="text-base leading-8 text-gray-600">
+        <div className="text-base font-semibold text-gray-900 mb-5">
+          That&apos;s when it hit me.
+        </div>
+        <p className="mb-7">
+          This wasn&apos;t just about unused stuff. It was about a broken connection.
+        </p>
+
+        <div className="mt-8 mb-8 pl-5 border-l-2 border-green-500 text-lg sm:text-xl font-semibold text-gray-800 leading-9 italic">
+          &ldquo;On one side — students trying to sell things, but no one sees it. On the other side — students needing things urgently, but no one can find them. Both sides exist. Both sides struggle. And yet, they never meet.&rdquo;
+        </div>
+      </div>
+
+      {/* SECTION 5: WHAT WAS BUILT */}
+      <hr className="border-gray-100 my-10" />
+
+      <div className="text-base leading-8 text-gray-600">
+        <p className="mb-7">
+          So this wasn&apos;t built to be just another platform.
+        </p>
+        <p className="mb-7">
+          It was built to fix something simple, but real:
+        </p>
+
+        <div className="mt-6 mb-8 flex flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-3 shrink-0" />
+            <div className="text-base text-gray-700 leading-7">
+              Let students sell easily — without shouting into the void.
             </div>
-         </div>
-      </section>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-3 shrink-0" />
+            <div className="text-base text-gray-700 leading-7">
+              Let students find what they need, exactly when they need it.
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-3 shrink-0" />
+            <div className="text-base text-gray-700 leading-7">
+              Reduce waste, save money, and make student life a little smarter.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 6: THE CLOSE */}
+      <hr className="border-gray-100 my-10" />
+
+      <div className="text-base leading-8 text-gray-600">
+        <p className="mb-7">
+          Because in the end, the problem was never availability.
+        </p>
+        <div className="text-lg sm:text-xl font-semibold text-gray-900 mt-4 mb-10 leading-8">
+          It was visibility and connection.
+        </div>
+
+        <div className="mt-10 flex flex-col gap-0.5">
+          <span className="text-sm font-semibold text-gray-900">— Akshit Kala</span>
+          <span className="text-sm text-gray-500">Founder, UniDeal</span>
+          <span className="text-xs text-gray-400 mt-1">LPU, Phagwara</span>
+        </div>
+      </div>
+
+      {/* CTA SECTION */}
+      <div className="mt-16 pt-10 border-t border-gray-100 text-center">
+        <h4 className="text-base font-semibold text-gray-900 mb-1">
+          Sound familiar?
+        </h4>
+        <p className="text-sm text-gray-500 mb-6">
+          Clear your almirah. Find what you need. It takes a minute.
+        </p>
+        <div className="flex gap-3 justify-center flex-wrap">
+          <Link 
+            href="/browse" 
+            className="bg-[#16a34a] text-white rounded-full h-10 px-6 text-sm font-semibold hover:bg-green-700 flex items-center justify-center transition-all"
+          >
+            Browse listings
+          </Link>
+          <Link 
+            href="/post" 
+            className="border border-gray-200 text-gray-700 rounded-full h-10 px-6 text-sm font-semibold hover:bg-gray-50 flex items-center justify-center transition-all"
+          >
+            List an item
+          </Link>
+        </div>
+      </div>
 
     </div>
   )

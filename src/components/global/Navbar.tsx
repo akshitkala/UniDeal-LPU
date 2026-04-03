@@ -218,6 +218,9 @@ export function Navbar() {
                     <p className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Account</p>
                     <Link onClick={() => setIsMobileMenuOpen(false)} href="/dashboard" className="px-4 py-3 rounded-xl font-semibold text-gray-600 hover:bg-gray-50">Dashboard</Link>
                     <Link onClick={() => setIsMobileMenuOpen(false)} href="/profile" className="px-4 py-3 rounded-xl font-semibold text-gray-600 hover:bg-gray-50">Profile</Link>
+                    {user.role === 'admin' && (
+                      <Link onClick={() => setIsMobileMenuOpen(false)} href="/admin" className="px-4 py-3 rounded-xl font-semibold text-emerald-700 hover:bg-emerald-50">Admin Panel</Link>
+                    )}
                     <button 
                       onClick={() => {
                           logout()

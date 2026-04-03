@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -16,10 +16,14 @@ import {
   Clock,
   Package,
   Share2,
-  AlertCircle
+  AlertCircle,
+  Edit,
+  Trash2,
+  Check
 } from 'lucide-react'
 import { ContactButton } from '@/components/listing/ContactButton'
 import { ReportModal } from '@/components/listing/ReportModal'
+import { ConfirmModal } from '@/components/global/ConfirmModal'
 import { ListingNotAvailable } from '@/components/listing/ListingNotAvailable'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'
@@ -31,30 +35,62 @@ export default function ListingDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeImage, setActiveImage] = useState(0)
+  
+  // Modals & States
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  
+  // Current User Detection
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [isOwner, setIsOwner] = useState(false)
+  
+  // Feedback states
+  const [isCopied, setIsCopied] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const fetchListing = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/listings/${slug}`)
+      const data = await res.json()
+      
+      if (data.error === 'not_available') {
+         setListing({ status: 'not_available' })
+         setLoading(false)
+         return
+      }
+
+      if (!res.ok) throw new Error('Listing not found')
+      setListing(data.listing)
+      return data.listing
+    } catch (err) {
+      setError('Listing could not be retrieved.')
+    } finally {
+      setLoading(false)
+    }
+  }, [slug])
+
+  const fetchUser = useCallback(async (listingSellerId?: string) => {
+    try {
+      const res = await fetch('/api/user/profile')
+      if (res.ok) {
+        const user = await res.json()
+        setCurrentUser(user)
+        if (listingSellerId && user._id === listingSellerId) {
+          setIsOwner(true)
+        }
+      }
+    } catch (err) {
+      // Silent fail for guests
+    }
+  }, [])
 
   useEffect(() => {
-    async function fetchListing() {
-      try {
-        const res = await fetch(`/api/listings/${slug}`)
-        const data = await res.json()
-        
-        if (data.error === 'not_available') {
-           setListing({ status: 'not_available' })
-           setLoading(false)
-           return
+    fetchListing().then(listing => {
+        if (listing?.seller?._id) {
+            fetchUser(listing.seller._id)
         }
-
-        if (!res.ok) throw new Error('Listing not found')
-        setListing(data.listing)
-      } catch (err) {
-        setError('Listing could not be retrieved.')
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchListing()
-  }, [slug])
+    })
+  }, [fetchListing, fetchUser])
 
   if (loading) {
     return (
@@ -106,6 +142,48 @@ export default function ListingDetail() {
     }
   }
 
+  const handleShare = async () => {
+    const shareData = {
+      title: listing.title,
+      text: `Check out this ${listing.title} on UniDeal:`,
+      url: window.location.href,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (err) {
+        // Fallback for user cancellation or error
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href)
+        setIsCopied(true)
+        setTimeout(() => setIsCopied(false), 2000)
+      } catch (err) {
+        console.error('Copy failed', err)
+      }
+    }
+  }
+
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/listings/${slug}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push('/dashboard?success=Listing deleted')
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete listing')
+      }
+    } catch (err) {
+      alert('Network error')
+    } finally {
+      setIsDeleting(false)
+      setIsDeleteModalOpen(false)
+    }
+  }
+
   const isPending = listing.status === 'pending'
   const isBanned = listing.status === 'banned' || listing.sellerBanned
   const isFlagged = listing.aiFlagged
@@ -114,22 +192,51 @@ export default function ListingDetail() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
       
       {/* Status Banners */}
-      {(isPending || isBanned || isFlagged) && (
+      {(isPending || isBanned || isFlagged || listing.status === 'sold') && (
         <div className="flex flex-col gap-3 mb-8">
-            {isPending && (
-                <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-3 text-blue-700 text-sm font-medium">
-                    <Clock className="w-5 h-5 shrink-0" /> This listing is pending approval and is only visible to you.
+            {listing.status === 'sold' && (
+                <div className="p-4 bg-gray-900 border border-gray-800 rounded-2xl flex items-center gap-3 text-white text-sm font-bold shadow-xl">
+                    <CheckCircle2 className="w-5 h-5 shrink-0 text-[#16a34a]" /> 
+                    <span>This item has been sold.</span>
+                    {isOwner && <span className="ml-auto text-[10px] uppercase tracking-widest text-gray-400">Archived</span>}
                 </div>
             )}
-            {isBanned && (
-                <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-700 text-sm font-medium">
-                    <AlertCircle className="w-5 h-5 shrink-0" /> This listing has been removed for violating our community guidelines.
-                </div>
-            )}
-            {isFlagged && (
-                <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-3 text-amber-700 text-sm font-medium">
-                    <ShieldAlert className="w-5 h-5 shrink-0" /> This listing is under review and is currently hidden from other users.
-                </div>
+            {isOwner && (
+                <>
+                    {isPending && (
+                        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between gap-3 text-indigo-700 text-sm font-medium shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <Clock className="w-5 h-5 shrink-0" />
+                                <span>This listing is pending approval and is only visible to you.</span>
+                            </div>
+                            <Link href={`/listing/${slug}/edit`} className="bg-indigo-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-indigo-700 transition-all shrink-0">
+                                Edit now
+                            </Link>
+                        </div>
+                    )}
+                    {isFlagged && (
+                        <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-between gap-3 text-amber-700 text-sm font-medium shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <ShieldAlert className="w-5 h-5 shrink-0" />
+                                <span>This listing is under review and is currently hidden from other users.</span>
+                            </div>
+                            <Link href={`/listing/${slug}/edit`} className="bg-amber-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-amber-700 transition-all shrink-0">
+                                Edit
+                            </Link>
+                        </div>
+                    )}
+                    {(listing.status === 'rejected') && (
+                        <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex flex-col gap-3 text-red-700 text-sm font-medium shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <AlertCircle className="w-5 h-5 shrink-0" />
+                                <span>This listing was rejected for: <strong>{listing.rejectionReason || 'Policy Violation'}</strong></span>
+                            </div>
+                            <Link href={`/listing/${slug}/edit`} className="bg-red-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-red-700 transition-all w-fit self-end">
+                                Fix & Repost
+                            </Link>
+                        </div>
+                    )}
+                </>
             )}
         </div>
       )}
@@ -249,20 +356,54 @@ export default function ListingDetail() {
                 </div>
              </div>
              
-             <ContactButton slug={listing.slug} sellerId={listing.seller?._id} />
+             {!isOwner ? (
+                <ContactButton slug={listing.slug} sellerId={listing.seller?._id} />
+             ) : (
+                <div className="flex flex-col gap-2">
+                    <Link 
+                        href={`/listing/${listing.slug}/edit`} 
+                        className="h-11 bg-gray-900 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all hover:bg-black active:scale-[0.98]"
+                    >
+                        <Edit className="w-4 h-4" /> Edit Listing
+                    </Link>
+                    <button 
+                        onClick={() => setIsDeleteModalOpen(true)}
+                        className="h-11 border border-red-100 text-red-500 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all hover:bg-red-50 active:scale-[0.98]"
+                    >
+                        <Trash2 className="w-4 h-4" /> Delete Listing
+                    </button>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mt-1">Listing Management</p>
+                </div>
+             )}
           </div>
 
           <div className="flex items-center justify-between pt-2">
              <button 
                onClick={() => setIsReportModalOpen(true)}
-               className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-red-500 transition-colors"
+               disabled={isOwner}
+               className={cn(
+                 "text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors",
+                 isOwner ? "text-gray-200 cursor-not-allowed" : "text-gray-400 hover:text-red-500"
+               )}
              >
                <Flag className="w-3.5 h-3.5" /> Report listing
              </button>
              <button 
-               className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-indigo-500 transition-colors"
+               onClick={handleShare}
+               className={cn(
+                 "text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5 transition-colors",
+                 isCopied ? "text-green-600" : "hover:text-indigo-500"
+               )}
              >
-               <Share2 className="w-3.5 h-3.5" /> Share
+               {isCopied ? (
+                 <div className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5" /> Link copied
+                 </div>
+               ) : (
+                 <div className="flex items-center gap-1.5">
+                    <Share2 className="w-3.5 h-3.5" /> Share listing
+                 </div>
+               )}
              </button>
           </div>
 
@@ -274,6 +415,18 @@ export default function ListingDetail() {
         isOpen={isReportModalOpen} 
         onClose={() => setIsReportModalOpen(false)} 
       />
+
+      {isDeleteModalOpen && (
+        <ConfirmModal 
+          title="Delete listing?"
+          description="This action will permanently remove your listing from the marketplace. This cannot be undone."
+          actionText="Delete permanently"
+          actionVariant="danger"
+          loading={isDeleting}
+          onConfirm={handleDelete}
+          onCancel={() => setIsDeleteModalOpen(false)}
+        />
+      )}
 
     </div>
   )

@@ -139,6 +139,54 @@ export default function Home() {
         </div>
       </section>
 
+      {/* LISTINGS SECTION */}
+      <section className="bg-white py-10 lg:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest block mb-1">Latest Listings</span>
+              <h2 className="text-base lg:text-lg font-semibold text-gray-900">Fresh on campus</h2>
+            </div>
+            <Link 
+              href="/browse" 
+              className="text-sm font-semibold text-[#16a34a] hover:text-green-700 flex items-center gap-1 transition-colors"
+            >
+              View all <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {error && (
+            <div className="p-10 bg-red-50 text-red-600 rounded-3xl border border-red-100 flex items-center justify-center gap-3">
+              <AlertTriangle className="w-6 h-6" /> {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="aspect-[4/5] bg-gray-50 rounded-2xl border border-gray-100 animate-pulse" />
+              ))}
+            </div>
+          ) : listings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+              <PackageCheck className="w-16 h-16 text-gray-200 mb-4" />
+              <h3 className="text-xl font-bold text-gray-900">No active deals right now</h3>
+              <p className="text-gray-500 text-sm mt-1 mb-8">Be the first to list an item today!</p>
+              <Link href="/post" className="h-12 px-8 bg-[#16a34a] text-white rounded-full font-bold shadow-lg shadow-green-600/10 active:scale-95 transition-all">
+                Post Item
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
+              {listings.map((listing, index) => (
+                <ListingCard key={listing._id} listing={listing} priority={index < 4} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* WHY SECTION */}
       <section className="bg-white py-10 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -227,54 +275,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* LISTINGS SECTION */}
-      <section className="bg-white py-10 lg:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="flex justify-between items-end mb-8">
-            <div>
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest block mb-1">Latest Listings</span>
-              <h2 className="text-base lg:text-lg font-semibold text-gray-900">Fresh on campus</h2>
-            </div>
-            <Link 
-              href="/browse" 
-              className="text-sm font-semibold text-[#16a34a] hover:text-green-700 flex items-center gap-1 transition-colors"
-            >
-              View all <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {error && (
-            <div className="p-10 bg-red-50 text-red-600 rounded-3xl border border-red-100 flex items-center justify-center gap-3">
-              <AlertTriangle className="w-6 h-6" /> {error}
-            </div>
-          )}
-
-          {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="aspect-[4/5] bg-gray-50 rounded-2xl border border-gray-100 animate-pulse" />
-              ))}
-            </div>
-          ) : listings.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-              <PackageCheck className="w-16 h-16 text-gray-200 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900">No active deals right now</h3>
-              <p className="text-gray-500 text-sm mt-1 mb-8">Be the first to list an item today!</p>
-              <Link href="/post" className="h-12 px-8 bg-[#16a34a] text-white rounded-full font-bold shadow-lg shadow-green-600/10 active:scale-95 transition-all">
-                Post Item
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
-              {listings.map((listing, index) => (
-                <ListingCard key={listing._id} listing={listing} priority={index < 4} />
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
