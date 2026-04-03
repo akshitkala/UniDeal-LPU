@@ -12,9 +12,9 @@ export const PATCH = withAdmin(async (req, user, context) => {
   try {
     if (!context) return NextResponse.json({ error: 'Missing context' }, { status: 400 })
     const { id } = await context.params
-    const { action, reason } = await req.json()
+    const { action, reason, role } = await req.json()
 
-    if (!['ban', 'unban'].includes(action)) {
+    if (!['ban', 'unban', 'changeRole'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action for user modification' }, { status: 400 })
     }
 
@@ -30,8 +30,35 @@ export const PATCH = withAdmin(async (req, user, context) => {
     const targetUser = await User.findById(id)
     if (!targetUser) return NextResponse.json({ error: 'User record not found' }, { status: 404 })
 
-    if (targetUser.role === 'admin') {
+    // Root clearance check: Admins cannot be banned/unbanned via this endpoint
+    // But their roles can be changed (unless it's self-demotion)
+    if (targetUser.role === 'admin' && action !== 'changeRole') {
       return NextResponse.json({ error: 'Root clearance denied — Admins cannot be modified via HTTP.' }, { status: 403 })
+    }
+
+    if (action === 'changeRole') {
+      if (!['admin', 'user'].includes(role)) {
+        return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+      }
+      if (targetUser.uid === user.uid && role === 'user') {
+        return NextResponse.json({ error: 'Self-demotion is restricted to prevent account lockout.' }, { status: 403 })
+      }
+
+      const previousRole = targetUser.role
+      targetUser.role = role
+      await targetUser.save()
+
+      await AdminActivity.create({
+        actor: adminUser._id,
+        actorType: 'user',
+        target: targetUser._id,
+        targetModel: 'User',
+        action: 'ROLE_CHANGED',
+        reason: reason || 'Admin role adjustment',
+        metadata: { previousRole, newRole: role, email: targetUser.email }
+      })
+
+      return NextResponse.json({ success: true, message: 'Role updated', user: targetUser })
     }
 
     const previousStatus = targetUser.isActive

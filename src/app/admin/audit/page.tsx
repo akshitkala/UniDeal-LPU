@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Activity, ShieldCheck, Loader2, Database, AlertTriangle } from 'lucide-react'
+import { Activity, ShieldCheck, Loader2, Database, AlertTriangle, ShieldAlert } from 'lucide-react'
 import { Banner } from '@/components/global/Banner'
 import { formatDistanceToNow } from 'date-fns'
 import { Avatar } from '@/components/ui/Avatar'
+import { cn } from '@/lib/utils'
 
 export default function AuditLog() {
   const [logs, setLogs] = useState<any[]>([])
@@ -20,7 +21,7 @@ export default function AuditLog() {
         setError(null)
       }
     } catch {
-      setError('Sync Error: Failed to retrieve audit data.')
+      setError('Failed to load audit data.')
     } finally {
       setLoading(false)
     }
@@ -31,80 +32,85 @@ export default function AuditLog() {
   }, [])
 
   return (
-    <div className="flex flex-col gap-8 max-w-7xl mx-auto mb-20">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       
-      <div>
-        <h1 className="text-3xl font-extrabold text-[#1A1A1A]">Audit Log</h1>
-        <p className="text-gray-500 mt-1">Record of all administrative actions on the marketplace.</p>
-      </div>
+      <header className="mb-8">
+        <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Audit log</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Record of administrative actions on the platform</p>
+      </header>
 
       {error && (
-        <Banner 
-          message={error} 
-          variant="error" 
-          onClose={() => setError(null)} 
-        />
+        <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-xs font-semibold">
+           <AlertTriangle className="w-4 h-4" /> {error}
+        </div>
       )}
 
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
+      <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden min-h-[400px]">
         {loading ? (
-          <div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 text-[#2D9A54] animate-spin" /></div>
+          <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-50">
+             <Loader2 className="w-8 h-8 text-[#16a34a] animate-spin" />
+             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Syncing...</span>
+          </div>
         ) : logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-20 text-center">
-            <Database className="w-12 h-12 text-gray-300 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800">No logs found</h3>
-            <p className="text-gray-500 mt-2">Administrative action stream is empty.</p>
+          <div className="flex flex-col items-center justify-center py-24 text-center opacity-50">
+            <Database className="w-12 h-12 text-gray-200 mb-4" />
+            <p className="text-sm font-semibold text-gray-400">No logs found</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-[#F9F9F9] border-b border-[#E5E5E5] text-gray-500 uppercase text-xs font-bold tracking-wider">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="p-4">Action</th>
-                  <th className="p-4">Actor</th>
-                  <th className="p-4">Details</th>
-                  <th className="p-4 text-right">Timestamp</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Action</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Actor</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Metadata</th>
+                  <th className="px-6 py-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E5E5E5]">
+              <tbody className="divide-y divide-gray-50">
                 {logs.map((log) => {
-                  const isDestructive = log.action.includes('CASCADE') || log.action.includes('HARD_DELETE') || log.action.includes('BANNED')
+                  const isDestructive = log.action.includes('CASCADE') || log.action.includes('HARD_DELETE') || log.action.includes('BANNED') || log.action.includes('WIPE')
                   return (
-                    <tr key={log._id} className={`hover:bg-gray-50 transition-colors ${isDestructive ? 'bg-red-50/20' : ''}`}>
+                    <tr key={log._id} className={cn(
+                        "hover:bg-gray-50/50 transition-colors",
+                        isDestructive && "bg-red-50/10"
+                    )}>
                       
-                      <td className="p-4 font-mono font-bold">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          {isDestructive ? <AlertTriangle className="w-4 h-4 text-red-500"/> : <Activity className="w-4 h-4 text-blue-500"/>}
-                          <span className={`${isDestructive ? 'text-red-700' : 'text-blue-700'}`}>{log.action}</span>
+                          <span className={cn(
+                            "text-[10px] font-bold font-mono px-2 py-0.5 rounded border",
+                            isDestructive ? "bg-red-50 text-red-600 border-red-100" : "bg-blue-50 text-blue-600 border-blue-100"
+                          )}>
+                            {log.action}
+                          </span>
                         </div>
                       </td>
 
-                      <td className="p-4">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                            <Avatar 
                              src={log.actor?.photoURL} 
                              name={log.actorType === 'deleted_user' ? 'System' : (log.actor?.displayName || 'System')}
                              size="sm"
                            />
-                           <div className="flex flex-col">
-                             {log.actorType === 'deleted_user' ? (
-                                <span className="font-bold text-gray-900">System (User Triggered)</span>
-                             ) : (
-                                <span className="font-bold text-gray-900">{log.actor?.displayName || 'System'}</span>
-                             )}
-                             <div className="flex items-center gap-1.5 mt-0.5">
-                               <span className="text-xs text-gray-500">{log.actor?.email || 'System Action'}</span>
-                             </div>
+                           <div className="min-w-0">
+                             <span className="text-xs font-semibold text-gray-900 block truncate">
+                                {log.actorType === 'deleted_user' ? 'System' : (log.actor?.displayName || 'System')}
+                             </span>
+                             <span className="text-[10px] text-gray-400 block truncate">{log.actor?.email || 'System Action'}</span>
                            </div>
                         </div>
                       </td>
 
-                      <td className="p-4 font-mono text-xs max-w-sm overflow-hidden text-ellipsis whitespace-nowrap text-gray-500">
-                         {log.reason && <div className="text-gray-800 font-bold mb-1">» {log.reason}</div>}
-                         {log.metadata ? JSON.stringify(log.metadata) : 'NO_PAYLOAD'}
+                      <td className="px-6 py-4">
+                         <div className="max-w-xs truncate font-mono text-[10px] text-gray-400 bg-gray-50 p-1 rounded border border-gray-100">
+                            {log.reason && <span className="text-gray-900 font-bold mr-2">{log.reason}</span>}
+                            {log.metadata ? JSON.stringify(log.metadata) : 'No metadata'}
+                         </div>
                       </td>
 
-                      <td className="p-4 text-right text-xs whitespace-nowrap">
+                      <td className="px-6 py-4 text-right text-[10px] font-medium text-gray-400 whitespace-nowrap">
                          {formatDistanceToNow(new Date(log.timestamp))} ago
                       </td>
                     </tr>

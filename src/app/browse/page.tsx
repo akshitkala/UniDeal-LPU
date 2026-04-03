@@ -140,14 +140,14 @@ function BrowseContent() {
     }
   }
 
-  // 2. Parallel Fetch: Categories + Initial Listings (Fix 10)
+  // 2. Stable Fetch: Categories + Initial Listings (Fix 4.2)
   useEffect(() => {
     async function initBrowse() {
-      setLoading(true)
+      // Parallel fetch for initial load (Fix 4.2)
       try {
         const [catRes, listRes] = await Promise.all([
           fetch('/api/categories'),
-          fetch(`/api/listings?limit=12${q ? `&q=${q}` : ''}${category ? `&category=${category}` : ''}${condition ? `&condition=${condition}` : ''}${minPrice ? `&minPrice=${minPrice}` : ''}${maxPrice ? `&maxPrice=${maxPrice}` : ''}${sort ? `&sort=${sort}` : ''}`)
+          fetch(`/api/listings?${searchParams.toString()}`)
         ])
 
         if (catRes.ok) {
@@ -168,8 +168,11 @@ function BrowseContent() {
       }
     }
 
+    // Guard against multiple simultaneous fetches
+    if (isFetchingRef.current) return
     initBrowse()
-  }, [q, category, condition, minPrice, maxPrice, sort])
+  }, [searchParams.toString()]) // Stable dependency (Fix 4.1)
+
 
   useEffect(() => {
     const sensor = sentinelRef.current
@@ -189,98 +192,20 @@ function BrowseContent() {
     <div className="flex flex-col min-h-screen bg-white">
       
       {/* STICKY FILTER BAR */}
-      <div className="sticky top-16 z-30 bg-white border-b border-gray-100 shadow-sm py-3 transition-all">
+      <div className="sticky top-14 sm:top-16 z-30 bg-white border-b border-gray-100 py-2 lg:py-3 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Desktop Filter Row */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-3">
             {/* Category Chips */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth">
               <button
                 onClick={() => updateFilters({ category: null })}
                 className={cn(
-                  "rounded-full px-5 h-9 text-xs font-bold transition-all whitespace-nowrap uppercase tracking-widest",
+                  "rounded-full px-4 h-9 text-xs font-bold transition-all whitespace-nowrap uppercase tracking-wide",
                   !category 
-                    ? "bg-gray-900 text-white shadow-md shadow-gray-200" 
+                    ? "bg-[#16a34a] text-white" 
                     : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                )}
-              >
-                All Items
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat._id}
-                  onClick={() => updateFilters({ category: cat.slug || null })}
-                  className={cn(
-                    "rounded-full px-5 h-9 text-xs font-bold transition-all whitespace-nowrap uppercase tracking-widest",
-                    category === cat.slug 
-                      ? "bg-gray-900 text-white shadow-md shadow-gray-200" 
-                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                  )}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-
-            <div className="h-5 w-px bg-gray-200 shrink-0" />
-
-            {/* Condition Select */}
-            <select 
-              value={condition}
-              onChange={(e) => updateFilters({ condition: e.target.value || null })}
-              className="rounded-full border border-gray-200 h-9 px-4 text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-green-500/10 transition-all bg-white"
-            >
-              <option value="">Any Condition</option>
-              <option value="new">Brand New</option>
-              <option value="like-new">Like New</option>
-              <option value="good">Good State</option>
-              <option value="used">Used/Fair</option>
-              <option value="damaged">Damaged</option>
-            </select>
-
-            {/* Price Inputs */}
-            <div className="flex items-center gap-2">
-              <input 
-                type="number" 
-                placeholder="Min Price" 
-                value={minPrice}
-                onChange={(e) => updateFilters({ minPrice: e.target.value || null })}
-                className="w-24 h-9 rounded-full border border-gray-200 px-4 text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-green-500/10 placeholder:text-gray-300"
-              />
-              <span className="text-gray-300">-</span>
-              <input 
-                type="number" 
-                placeholder="Max Price" 
-                value={maxPrice}
-                onChange={(e) => updateFilters({ maxPrice: e.target.value || null })}
-                className="w-24 h-9 rounded-full border border-gray-200 px-4 text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-green-500/10 placeholder:text-gray-300"
-              />
-            </div>
-
-            {/* Sort Select */}
-            <select 
-              value={sort}
-              onChange={(e) => updateFilters({ sort: e.target.value })}
-              className="ml-auto rounded-full border border-gray-200 h-9 px-4 text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-green-500/10 transition-all bg-white"
-            >
-              <option value="newest">Newest First</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="views">Most Views</option>
-            </select>
-          </div>
-
-          {/* Mobile Filter Row */}
-          <div className="lg:hidden flex flex-col gap-3">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth">
-              <button
-                onClick={() => updateFilters({ category: null })}
-                className={cn(
-                  "rounded-full px-5 h-9 text-xs font-bold transition-all whitespace-nowrap uppercase tracking-widest",
-                  !category 
-                    ? "bg-gray-900 text-white" 
-                    : "bg-gray-100 text-gray-400"
                 )}
               >
                 All
@@ -290,10 +215,85 @@ function BrowseContent() {
                   key={cat._id}
                   onClick={() => updateFilters({ category: cat.slug || null })}
                   className={cn(
-                    "rounded-full px-5 h-9 text-xs font-bold transition-all whitespace-nowrap uppercase tracking-widest",
+                    "rounded-full px-4 h-9 text-xs font-bold transition-all whitespace-nowrap uppercase tracking-wide",
                     category === cat.slug 
-                      ? "bg-gray-900 text-white" 
-                      : "bg-gray-100 text-gray-400"
+                      ? "bg-[#16a34a] text-white" 
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  )}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="h-4 w-px bg-gray-100 shrink-0 mx-1" />
+
+            {/* Condition Select */}
+            <select 
+              value={condition}
+              onChange={(e) => updateFilters({ condition: e.target.value || null })}
+              className="rounded-full border border-gray-100 h-9 px-3 text-xs font-bold text-gray-600 outline-none transition-all bg-white"
+            >
+              <option value="">Condition</option>
+              <option value="new">New</option>
+              <option value="like-new">Like New</option>
+              <option value="good">Good</option>
+              <option value="used">Used</option>
+            </select>
+
+            {/* Price Inputs */}
+            <div className="flex items-center gap-2">
+              <input 
+                type="number" 
+                placeholder="Min" 
+                value={minPrice}
+                onChange={(e) => updateFilters({ minPrice: e.target.value || null })}
+                className="w-20 h-9 rounded-full border border-gray-100 px-3 text-xs font-bold text-gray-600 outline-none placeholder:text-gray-300"
+              />
+              <input 
+                type="number" 
+                placeholder="Max" 
+                value={maxPrice}
+                onChange={(e) => updateFilters({ maxPrice: e.target.value || null })}
+                className="w-20 h-9 rounded-full border border-gray-100 px-3 text-xs font-bold text-gray-600 outline-none placeholder:text-gray-300"
+              />
+            </div>
+
+            {/* Sort Select */}
+            <select 
+              value={sort}
+              onChange={(e) => updateFilters({ sort: e.target.value })}
+              className="ml-auto rounded-full border border-gray-100 h-9 px-3 text-xs font-bold text-gray-600 outline-none transition-all bg-white"
+            >
+              <option value="newest">Newest</option>
+              <option value="price_asc">Price: Low</option>
+              <option value="price_desc">Price: High</option>
+            </select>
+          </div>
+
+          {/* Mobile Filter Row */}
+          <div className="lg:hidden flex flex-col gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+              <button
+                onClick={() => updateFilters({ category: null })}
+                className={cn(
+                  "rounded-full px-3 h-8 text-[10px] font-bold transition-all whitespace-nowrap uppercase tracking-wide",
+                  !category 
+                    ? "bg-[#16a34a] text-white" 
+                    : "bg-gray-100 text-gray-500"
+                )}
+              >
+                All
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat._id}
+                  onClick={() => updateFilters({ category: cat.slug || null })}
+                  className={cn(
+                    "rounded-full px-3 h-8 text-[10px] font-bold transition-all whitespace-nowrap uppercase tracking-wide",
+                    category === cat.slug 
+                      ? "bg-[#16a34a] text-white" 
+                      : "bg-gray-100 text-gray-500"
                   )}
                 >
                   {cat.name}
@@ -303,19 +303,19 @@ function BrowseContent() {
             <div className="flex items-center justify-between">
                <button 
                  onClick={() => setShowMobileFilters(true)}
-                 className="flex items-center gap-2 h-9 px-4 rounded-full bg-white border border-gray-100 text-xs font-bold text-gray-600 shadow-sm"
+                 className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-white border border-gray-100 text-[10px] font-bold text-gray-600"
                >
-                 <SlidersHorizontal className="w-3.5 h-3.5" /> 
+                 <SlidersHorizontal className="w-3 h-3" /> 
                  Filters {(condition || minPrice || maxPrice) && "•"}
                </button>
                <select 
                   value={sort}
                   onChange={(e) => updateFilters({ sort: e.target.value })}
-                  className="h-9 px-3 rounded-full border border-gray-100 bg-white text-xs font-bold text-gray-600 outline-none"
+                  className="h-8 px-2 rounded-full border border-gray-100 bg-white text-[10px] font-bold text-gray-600 outline-none"
                 >
-                  <option value="newest">Sort: Newest</option>
-                  <option value="price_asc">Price: Lower</option>
-                  <option value="price_desc">Price: Higher</option>
+                  <option value="newest">Newest</option>
+                  <option value="price_asc">Price: Low</option>
+                  <option value="price_desc">Price: High</option>
                 </select>
             </div>
           </div>
@@ -324,10 +324,10 @@ function BrowseContent() {
       </div>
 
       {/* RESULTS GRID */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
         
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-           <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest italic">
+        <div className="mb-6">
+           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
               {q ? (
                 <>
                    {totalCount} results for "{q}"
@@ -342,64 +342,39 @@ function BrowseContent() {
                 </>
               )}
            </h2>
-           
-           <div className="flex items-center gap-2">
-             {q && (
-               <button 
-                 onClick={() => {
-                   setSearchInput('')
-                   updateFilters({ q: null })
-                 }}
-                 className="flex items-center gap-1.5 text-xs font-bold text-gray-900 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100"
-               >
-                 "{q}" <X className="w-3 h-3" />
-               </button>
-             )}
-           </div>
         </div>
 
         {loading && listings.length === 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <SkeletonCard key={i} />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] bg-gray-50 rounded-xl border border-gray-100 animate-pulse" />
             ))}
           </div>
         ) : listings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center animate-in fade-in zoom-in-95 duration-500">
-             <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-8">
-                <Search className="w-12 h-12 text-gray-200" />
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                <Search className="w-8 h-8 text-gray-200" />
              </div>
-             <h2 className="text-2xl font-black text-gray-900 mb-2">
-                {q ? `No results for "${q}"` : "No listings match these filters"}
+             <h2 className="text-base font-semibold text-gray-900 mb-1">
+                No results found
              </h2>
-             <p className="text-gray-500 font-medium max-w-sm mb-10">
-                {q 
-                  ? "Try a different keyword or clear your search to browse all items." 
-                  : "We couldn't find any listings matching your selection. Try adjusting your filters."}
+             <p className="text-sm text-gray-400 max-w-xs mx-auto mb-8">
+                Try a different keyword or clear your filters.
              </p>
 
-             {q ? (
-               <button 
-                onClick={() => {
-                  setSearchInput('')
-                  updateFilters({ q: null })
-                }}
-                className="px-10 py-4 bg-gray-900 text-white font-bold rounded-full shadow-xl shadow-gray-200 active:scale-95 transition-all"
-               >
-                 Clear search
-               </button>
-             ) : (
-               <Link 
-                href="/browse"
-                className="px-10 py-4 bg-gray-900 text-white font-bold rounded-full shadow-xl shadow-gray-200 active:scale-95 transition-all"
-               >
-                 Clear all filters
-               </Link>
-             )}
+             <button 
+              onClick={() => {
+                setSearchInput('')
+                updateFilters({ q: null, category: null, condition: null, minPrice: null, maxPrice: null })
+              }}
+              className="h-10 px-6 bg-[#16a34a] text-white font-semibold text-sm rounded-full transition-all"
+             >
+               Clear all
+             </button>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
               {listings.map((listing, index) => (
                 <ListingCard 
                   key={listing._id} 
@@ -412,20 +387,16 @@ function BrowseContent() {
             {/* Pagination Sentinel */}
             <div 
               ref={sentinelRef}
-              className="mt-20 py-10 flex flex-col items-center justify-center w-full"
+              className="mt-16 py-8 flex flex-col items-center justify-center w-full"
             >
               {fetchingMore && (
-                <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
-                  <div className="w-8 h-8 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
-                  <span className="text-[10px] font-bold uppercase text-gray-400 tracking-[0.2em] italic">Loading more listings...</span>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-6 h-6 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
+                  <span className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Loading...</span>
                 </div>
               )}
               {!nextCursor && listings.length > 0 && (
-                <div className="flex flex-col items-center gap-4 opacity-40">
-                  <div className="h-px w-16 bg-gray-300" />
-                  <p className="text-[10px] font-bold uppercase tracking-[0.3em]">You've seen all listings</p>
-                  <div className="h-px w-16 bg-gray-300" />
-                </div>
+                <p className="text-[10px] font-bold uppercase text-gray-300 tracking-widest">End of results</p>
               )}
             </div>
           </>
@@ -436,26 +407,26 @@ function BrowseContent() {
       {showMobileFilters && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden">
            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)} />
-           <div className="relative bg-white rounded-t-[2.5rem] p-8 animate-in slide-in-from-bottom-full duration-300">
-              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8" onClick={() => setShowMobileFilters(false)} />
+           <div className="relative bg-white rounded-t-2xl p-6 animate-in slide-in-from-bottom-full duration-300">
+              <div className="w-10 h-1 bg-gray-100 rounded-full mx-auto mb-6" onClick={() => setShowMobileFilters(false)} />
               
-              <div className="flex items-center justify-between mb-8">
-                 <h3 className="text-xl font-black text-gray-900 capitalize">Filters</h3>
-                 <button onClick={() => updateFilters({ condition: null, minPrice: null, maxPrice: null })} className="text-xs font-bold text-[#16a34a] uppercase tracking-widest">Reset</button>
+              <div className="flex items-center justify-between mb-6">
+                 <h3 className="text-base font-semibold text-gray-900">Filters</h3>
+                 <button onClick={() => updateFilters({ condition: null, minPrice: null, maxPrice: null })} className="text-xs font-bold text-[#16a34a] uppercase tracking-wide">Reset</button>
               </div>
 
-              <div className="space-y-8 pb-10">
-                 <div className="flex flex-col gap-4">
-                    <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Condition</label>
-                    <div className="grid grid-cols-2 gap-2">
-                       {['new', 'like-new', 'good', 'used', 'damaged'].map((cond) => (
+              <div className="space-y-6 pb-6">
+                 <div>
+                    <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest block mb-3">Condition</label>
+                    <div className="flex flex-wrap gap-2">
+                       {['new', 'like-new', 'good', 'used'].map((cond) => (
                          <button 
                            key={cond}
                            onClick={() => updateFilters({ condition: cond === condition ? null : cond })}
                            className={cn(
-                             "h-11 rounded-xl text-xs font-bold transition-all capitalize px-4 border",
+                             "h-8 px-4 rounded-full text-xs font-semibold transition-all border",
                              condition === cond 
-                               ? "bg-green-50 border-green-500 text-green-700 shadow-sm" 
+                               ? "bg-green-50 border-green-500 text-green-700" 
                                : "bg-gray-50 border-gray-100 text-gray-600"
                            )}
                          >
@@ -465,37 +436,31 @@ function BrowseContent() {
                     </div>
                  </div>
 
-                 <div className="flex flex-col gap-4">
-                    <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Price range</label>
-                    <div className="flex items-center gap-3">
-                        <div className="relative flex-1">
-                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">₹</span>
-                           <input 
-                              type="number" 
-                              placeholder="Min" 
-                              value={minPrice}
-                              onChange={(e) => updateFilters({ minPrice: e.target.value || null })}
-                              className="w-full h-12 bg-gray-50 border-none rounded-2xl pl-8 pr-4 font-bold text-sm"
-                           />
-                        </div>
-                        <span className="text-gray-300">to</span>
-                        <div className="relative flex-1">
-                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">₹</span>
-                           <input 
-                              type="number" 
-                              placeholder="Max" 
-                              value={maxPrice}
-                              onChange={(e) => updateFilters({ maxPrice: e.target.value || null })}
-                              className="w-full h-12 bg-gray-50 border-none rounded-2xl pl-8 pr-4 font-bold text-sm"
-                           />
-                        </div>
+                 <div>
+                    <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest block mb-3">Price range</label>
+                    <div className="flex items-center gap-2">
+                        <input 
+                            type="number" 
+                            placeholder="Min" 
+                            value={minPrice}
+                            onChange={(e) => updateFilters({ minPrice: e.target.value || null })}
+                            className="flex-1 h-10 bg-gray-50 border border-gray-100 rounded-lg px-3 text-sm font-semibold"
+                        />
+                        <span className="text-gray-300 text-xs">to</span>
+                        <input 
+                            type="number" 
+                            placeholder="Max" 
+                            value={maxPrice}
+                            onChange={(e) => updateFilters({ maxPrice: e.target.value || null })}
+                            className="flex-1 h-10 bg-gray-50 border border-gray-100 rounded-lg px-3 text-sm font-semibold"
+                        />
                     </div>
                  </div>
               </div>
 
               <button 
                 onClick={() => setShowMobileFilters(false)}
-                className="w-full h-14 bg-gray-900 text-white rounded-2xl font-bold flex items-center justify-center active:scale-95 transition-all shadow-xl shadow-gray-200"
+                className="w-full h-11 bg-gray-900 text-white rounded-full font-semibold text-sm transition-all"
               >
                 Apply filters
               </button>
@@ -509,10 +474,11 @@ function BrowseContent() {
 export default function BrowsePage() {
   return (
     <Suspense fallback={
-       <div className="min-h-screen flex items-center justify-center bg-white">
-          <div className="flex flex-col items-center gap-4">
-             <div className="w-12 h-12 rounded-full border-4 border-green-500 border-t-transparent animate-spin" />
-             <span className="text-[10px] font-bold uppercase text-gray-300 tracking-[0.3em]">Loading...</span>
+       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
        </div>
     }>
@@ -520,3 +486,4 @@ export default function BrowsePage() {
     </Suspense>
   )
 }
+

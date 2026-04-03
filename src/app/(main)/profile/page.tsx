@@ -10,12 +10,9 @@ import {
   ShieldCheck, 
   Trash2, 
   Loader2, 
-  ExternalLink, 
   LogOut,
   Save,
   ShieldEllipsis,
-  CircleUser,
-  BadgeCheck,
   AlertTriangle
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -29,7 +26,6 @@ export default function ProfilePage() {
   const { user, setUser, loading: authLoading, logout } = useAuth()
   const router = useRouter()
 
-  // State for form
   const [formData, setFormData] = useState({
     displayName: '',
     bio: ''
@@ -38,7 +34,6 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null)
   
-  // Danger Zone State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -97,8 +92,6 @@ export default function ProfilePage() {
     try {
       const res = await fetch('/api/user/profile', { method: 'DELETE' })
       if (res.ok) {
-        // AuthProvider handles cookie clearing and redirect via state update or logout call
-        // But here we explicitly redirect after a successful hard delete
         window.location.href = '/login'
       } else {
         const data = await res.json()
@@ -114,219 +107,180 @@ export default function ProfilePage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 gap-4">
-        <Loader2 className="w-12 h-12 text-[#2D9A54] animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Syncing Identity</p>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 gap-3 opacity-50">
+        <Loader2 className="w-10 h-10 text-[#16a34a] animate-spin" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Loading profile...</span>
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-6 flex flex-col gap-8 min-h-screen mb-24">
+    <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 flex flex-col gap-8 mb-24">
       
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-black text-gray-900 tracking-tighter">Profile & Settings</h1>
-        <p className="text-gray-500 font-medium">Manage your campus identity and account security.</p>
-      </div>
+      <header>
+        <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Profile</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Manage your account and public information</p>
+      </header>
 
       {message && (
-        <Banner 
-          message={message.text} 
-          variant={message.type} 
-          onClose={() => setMessage(null)} 
-        />
+        <div className={cn(
+            "p-3 border rounded-xl flex items-center gap-2 text-xs font-semibold",
+            message.type === 'success' ? "bg-green-50 border-green-100 text-green-600" : "bg-red-50 border-red-100 text-red-600"
+        )}>
+            {message.type === 'success' ? <ShieldCheck className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+            {message.text}
+        </div>
       )}
 
-      {/* Main Settings Card */}
-      <div className="bg-white border border-gray-100 rounded-[2.5rem] shadow-premium overflow-hidden">
+      {/* Profile Card */}
+      <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
         
-        {/* Profile Identity Section */}
-        <div className="p-8 md:p-12 border-b border-gray-50 bg-gray-50/30">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-emerald-500/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
-              <div className="relative w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl ring-1 ring-gray-100">
-                <Avatar 
-                  src={user.photoURL} 
-                  name={user.displayName}
-                  size="xl"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
+        {/* Identity Row */}
+        <div className="p-6 sm:p-8 border-b border-gray-50 bg-gray-50/30">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <Avatar 
+                src={user.photoURL} 
+                name={user.displayName}
+                size="xl"
+                className="w-24 h-24 ring-4 ring-white shadow-md"
+            />
             
-            <div className="flex flex-col text-center md:text-left gap-2">
-              <div className="flex items-center justify-center md:justify-start gap-2">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none uppercase">
+            <div className="flex-1 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <h2 className="text-lg font-semibold text-gray-900 leading-none">
                   {user.displayName}
                 </h2>
                 {user.role === 'admin' && (
-                  <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                  <ShieldCheck className="w-4 h-4 text-[#16a34a]" />
                 )}
               </div>
-              <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-widest">
+              <div className="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-2 mt-2">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                   <Mail className="w-3.5 h-3.5" /> {user.email}
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  <Calendar className="w-3.5 h-3.5" /> Member Since {formatDistanceToNow(new Date(user.createdAt))} ago
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <Calendar className="w-3.5 h-3.5" /> Joined {formatDistanceToNow(new Date(user.createdAt))} ago
                 </div>
               </div>
             </div>
 
             {user.role === 'admin' && (
               <Link 
-                href="/admin/overview"
-                className="md:ml-auto flex items-center gap-2 h-12 px-6 bg-emerald-50 text-emerald-700 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-100 shadow-sm"
+                href="/admin"
+                className="h-9 px-4 bg-indigo-50 text-indigo-700 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-indigo-100 transition-all border border-indigo-100"
               >
-                <ShieldEllipsis className="w-4 h-4" /> Admin Panel
+                <ShieldEllipsis className="w-3.5 h-3.5" /> Admin Panel
               </Link>
             )}
           </div>
         </div>
 
-        {/* Form Section */}
-        <form onSubmit={handleSave} className="p-8 md:p-12 flex flex-col gap-8">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Display Name */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">
-                Display Name
-              </label>
-              <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-emerald-500 transition-colors" />
-                <input 
-                  type="text"
-                  name="displayName"
-                  value={formData.displayName}
-                  onChange={handleInputChange}
-                  className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-transparent focus:border-emerald-500 focus:bg-white rounded-2xl outline-none text-gray-900 font-bold transition-all shadow-inner-sm"
-                  placeholder="Your campus name"
-                  minLength={2}
-                  maxLength={50}
-                  required
-                />
-              </div>
-              <p className="text-[10px] text-gray-400 font-medium px-1">
-                visible to all students on your public profile.
-              </p>
-            </div>
-
-            {/* Email (Read-only) */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">
-                Primary Email
-              </label>
-              <div className="relative group opacity-60 cursor-not-allowed">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
-                <input 
-                  type="email"
-                  value={user.email}
-                  readOnly
-                  className="w-full h-14 pl-12 pr-4 bg-gray-100 border border-transparent rounded-2xl outline-none text-gray-500 font-bold"
-                />
-              </div>
-              <p className="text-[10px] text-gray-400 font-medium px-1">
-                Managed by Google Workspace. Cannot be edited.
-              </p>
-            </div>
-          </div>
-
-          {/* Bio */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">
-              Campus Bio
-            </label>
-            <div className="relative group">
-              <textarea 
-                name="bio"
-                value={formData.bio}
+        {/* Edit Form */}
+        <form onSubmit={handleSave} className="p-6 sm:p-8 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest pl-1">Display Name</label>
+              <input 
+                type="text"
+                name="displayName"
+                value={formData.displayName}
                 onChange={handleInputChange}
-                rows={4}
-                className="w-full p-4 bg-gray-50 border border-transparent focus:border-emerald-500 focus:bg-white rounded-[2rem] outline-none text-gray-900 font-medium transition-all shadow-inner-sm resize-none"
-                placeholder="Say hello to the campus community..."
-                maxLength={200}
+                className="w-full h-10 px-3 bg-gray-100 border-none rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-[#16a34a10]"
+                placeholder="Full name or nickname"
+                minLength={2}
+                maxLength={50}
+                required
               />
-              <div className="absolute bottom-4 right-4 text-[10px] font-black text-gray-300 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-full border border-gray-100">
-                {formData.bio.length} / 200
-              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest pl-1">Email</label>
+              <input 
+                type="email"
+                value={user.email}
+                readOnly
+                className="w-full h-10 px-3 bg-gray-50 border-none rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
+              />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-4 border-t border-gray-50 pt-8 mt-4">
-             <button 
-                type="button"
-                onClick={() => router.push('/')}
-                className="h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-all"
-             >
-                Discard
-             </button>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest pl-1">Bio</label>
+            <textarea 
+              name="bio"
+              value={formData.bio}
+              onChange={handleInputChange}
+              rows={4}
+              className="w-full p-3 bg-gray-100 border-none rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-[#16a34a10] resize-none"
+              placeholder="Tell others about yourself..."
+              maxLength={200}
+            />
+            <div className="text-right">
+                <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">
+                    {formData.bio.length} / 200 characters
+                </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-50">
              <button 
                 disabled={!isChanged || saving}
                 className={cn(
-                  "h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95",
+                  "h-10 px-6 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all",
                   isChanged 
-                    ? "bg-[#2D9A54] text-white hover:bg-[#258246] shadow-emerald-200" 
-                    : "bg-gray-100 text-gray-400 shadow-none cursor-not-allowed"
+                    ? "bg-[#16a34a] text-white hover:bg-[#15803d]" 
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 )}
              >
                 {saving ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Updating...</>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <><Save className="w-4 h-4" /> Save Changes</>
+                  <Save className="w-3.5 h-3.5" />
                 )}
+                Save Changes
              </button>
           </div>
         </form>
       </div>
 
       {/* Danger Zone */}
-      <div className="bg-rose-50/30 border border-rose-100 rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center md:items-start gap-6">
-        <div className="flex flex-col gap-1 text-center md:text-left">
-          <h3 className="text-xl font-black text-rose-600 uppercase tracking-tight flex items-center justify-center md:justify-start gap-2">
-            <AlertTriangle className="w-5 h-5" /> Danger Zone
+      <div className="bg-red-50/50 border border-red-100 rounded-xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-red-600 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" /> Danger Zone
           </h3>
-          <p className="text-rose-500/70 font-medium text-sm">
-            Irreversibly erase your account, active listings, and all associated images from UniDeal.
+          <p className="text-xs text-red-500/70 font-medium">
+             Permanently delete your account and all associated data.
           </p>
         </div>
         
         <button 
           onClick={() => setIsDeleteModalOpen(true)}
-          className="h-14 px-8 bg-white border border-rose-200 text-rose-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm shadow-rose-100 flex items-center gap-2"
+          className="h-10 px-4 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition-all shadow-sm shadow-red-100 flex items-center justify-center gap-2 whitespace-nowrap"
         >
-          <Trash2 className="w-4 h-4" /> Delete Account Permanently
+          <Trash2 className="w-3.5 h-3.5" /> Delete Account
         </button>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <ConfirmModal 
-          title="Master Wipe Protocol"
+          title="Delete account"
           description={
-            <div className="flex flex-col gap-3 text-center">
-              <p className="text-gray-800 font-medium">
-                You are about to irreversibly erase your campus identity.
-              </p>
-              <div className="bg-rose-50 p-4 rounded-2xl text-left border border-rose-100 flex flex-col gap-2">
-                <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-2">
-                  <BadgeCheck className="w-3 h-3" /> Impact Summary:
-                </div>
-                <ul className="text-xs text-rose-700/80 font-bold flex flex-col gap-1 list-disc px-4">
-                  <li>Profile metadata & biography</li>
-                  <li>All active & pending listings</li>
-                  <li>Injected Cloudinary assets (images)</li>
-                  <li>Community trust signals</li>
-                </ul>
-              </div>
-              <p className="text-xs text-gray-500 font-bold leading-relaxed mt-2">
-                This action executes a multi-db cascade wipe. <br/>It cannot be recovered.
-              </p>
+            <div className="space-y-4 py-2">
+               <p className="text-sm text-gray-600 leading-relaxed">
+                 You are about to permanently delete your account. This will remove:
+               </p>
+               <ul className="text-xs text-gray-500 font-medium space-y-1 list-disc px-4">
+                  <li>Your profile information and bio</li>
+                  <li>All your active and pending listings</li>
+                  <li>All listing images and saved data</li>
+               </ul>
+               <p className="text-xs text-red-600 font-semibold">
+                 This action cannot be undone.
+               </p>
             </div>
           }
-          actionText="Execute Master Wipe"
+          actionText="Confirm deletion"
           actionVariant="danger"
           requireText="DELETE"
           loading={deleting}

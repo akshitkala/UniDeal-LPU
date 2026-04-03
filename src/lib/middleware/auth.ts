@@ -28,9 +28,6 @@ export function withAuth(
         return NextResponse.json({ error: 'Unauthorised — invalid or expired token' }, { status: 401 })
       }
 
-      // isActive check happens at login and on each protected request
-      // Banned users (isActive:false) cannot obtain a new JWT — middleware enforces this
-      // The payload role/uid are embedded in JWT — DB check only for ban status handled at login
       return handler(req, payload, context)
     } catch (error) {
       return NextResponse.json({ error: 'Unauthorised — session verification failure' }, { status: 401 })
@@ -51,4 +48,21 @@ export function withAdmin(
     }
     return handler(req, user, context)
   })
+}
+
+/**
+ * Utility to get user from request without enforcing auth.
+ * Returns null if no valid token is found.
+ */
+export async function getUserFromRequest(req: NextRequest): Promise<JWTPayload | null> {
+  try {
+    const cookieHeader = req.headers.get('cookie') || ''
+    const tokenMatch = cookieHeader.match(/access_token=([^;]+)/)
+    const token = tokenMatch ? tokenMatch[1] : null
+
+    if (!token) return null
+    return await verifyAccessToken(token)
+  } catch {
+    return null
+  }
 }

@@ -99,18 +99,25 @@ const ListingSchema = new Schema<IListing>(
   { timestamps: true }
 )
 
-// Compound Index: Public Visibility Matrix (The 5 Mandatory Conditions)
-// status='approved' AND isDeleted=false AND sellerBanned=false AND isExpired=false AND aiFlagged=false
-ListingSchema.index({ status: 1, isDeleted: 1, sellerBanned: 1, isExpired: 1, aiFlagged: 1 })
+// Compound Index: Feed Sort Order (Fix 1.1)
+ListingSchema.index({ bumpedAt: -1, createdAt: -1 })
 
-// Single Field Indexes for Foreign Keys and Sorting
-ListingSchema.index({ category: 1 })
+// Compound Index: Public Visibility Matrix (The 4 Mandatory Conditions) (Fix 1.1)
+ListingSchema.index({ status: 1, isDeleted: 1, sellerBanned: 1, aiFlagged: 1 })
+
+// Compound Index: Category Filtering (Fix 1.1)
+ListingSchema.index({ category: 1, status: 1, sellerBanned: 1, aiFlagged: 1 })
+
+// Single Field Indexes for Foreign Keys and Unique Constraints
 ListingSchema.index({ seller: 1 })
 ListingSchema.index({ createdAt: -1 })
-ListingSchema.index({ expiresAt: 1 })
+
+// TTL Index for Expiry (Fix 1.1)
+ListingSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
 
 // Text Index for Search (title + description)
 ListingSchema.index({ title: 'text', description: 'text' })
+
 
 // Set expiresAt to 60 days from creation on new documents
 ListingSchema.pre('save', function () {

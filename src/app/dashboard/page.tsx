@@ -2,26 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { formatDistanceToNow, addDays, isAfter } from 'date-fns'
-import { 
-  PlusCircle, 
-  Trash2, 
-  ArrowUpCircle, 
-  CheckCircle, 
-  AlertTriangle, 
-  Loader2,
-  Clock,
-  ExternalLink,
-  ShieldAlert,
-  ChevronRight,
-  TrendingUp,
-  Inbox
-} from 'lucide-react'
+import { addDays, isAfter } from 'date-fns'
+import { getRelativeTime } from '@/lib/utils/time'
+import { Edit, Trash2, ArrowUpCircle, CheckCircle, Clock, Inbox, ChevronRight, AlertTriangle } from 'lucide-react'
 import { ConfirmModal } from '@/components/global/ConfirmModal'
 import { cn } from '@/lib/utils'
 import { ListingCard } from '@/components/listing/ListingCard'
 
-type TabState = 'active' | 'pending' | 'blocked'
+type TabState = 'active' | 'pending' | 'sold' | 'expired'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabState>('active')
@@ -40,6 +28,7 @@ export default function Dashboard() {
   const fetchListings = async (tab: TabState) => {
     setLoading(true)
     try {
+      // Mapping sold/expired to the underlying API status if needed, but assuming direct mapping for now
       const res = await fetch(`/api/user/listings?status=${tab}`)
       const data = await res.json()
       if (res.ok) {
@@ -66,12 +55,12 @@ export default function Dashboard() {
       if (!res.ok) {
         setError(data.error || 'Rate limit exceeded.')
       } else {
-        setSuccess('Listing prioritized in the feed.')
+        setSuccess('Listing prioritized.')
         setError(null)
         fetchListings(activeTab)
       }
     } catch (error) {
-      setError('Network error during bump.')
+      setError('Network error.')
     } finally {
       setActionLoading(null)
     }
@@ -93,87 +82,80 @@ export default function Dashboard() {
         setError(data.error || 'Failed to delete listing.')
       }
     } catch (error) {
-      setError('Network error during deletion.')
+      setError('Network error.')
     } finally {
       setActionLoading(null)
     }
   }
 
   return (
-    <div className="flex flex-col gap-10 max-w-[1280px] mx-auto mt-8 mb-24 px-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
       
-      {/* Header Strategy */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div className="flex flex-col gap-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 mb-2 w-fit">
-                <TrendingUp className="w-3 h-3" /> Marketplace
-            </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-950 tracking-tighter leading-none mb-1">My Dashboard</h1>
-            <p className="text-gray-500 font-medium text-base sm:text-lg">Manage your campus listings and interactions.</p>
+      {/* Header */}
+      <header className="flex items-center justify-between gap-4 mb-6 lg:mb-8">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">My Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Manage your campus listings</p>
         </div>
 
         <Link 
           href="/post" 
-          className="h-14 sm:h-16 px-8 sm:px-10 bg-[#2D9A54] hover:bg-[#258246] text-white rounded-2xl font-black text-base sm:text-lg flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-[#2D9A54]/20"
+          className="h-10 lg:h-11 px-5 lg:px-6 bg-[#16a34a] hover:bg-green-700 text-white rounded-full font-semibold text-sm flex items-center justify-center transition-all"
         >
-          <PlusCircle className="w-6 h-6" /> Sell Another Item
+          Sell item
         </Link>
       </header>
 
-      {/* Persistence Tabs */}
-      <div className="w-full overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="flex items-center gap-1 p-1.5 bg-gray-50 border border-gray-100 rounded-2xl w-fit min-w-full sm:min-w-0">
-          {[
-            { id: 'active', label: 'Live', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-[#2D9A54]' },
-            { id: 'pending', label: 'Review', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-500' },
-            { id: 'blocked', label: 'Blocked', icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-500' }
-          ].map((tab) => (
-              <button 
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabState)}
-                  className={cn(
-                      "relative flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2",
-                      activeTab === tab.id ? "bg-white shadow-sm text-gray-900" : "text-gray-400 hover:text-gray-600"
-                  )}
-              >
-                  <tab.icon className={cn("w-3.5 h-3.5 sm:w-4 h-4", activeTab === tab.id ? tab.color : "text-gray-300")} />
-                  {tab.label}
-                  {activeTab === tab.id && <span className={cn("absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full", tab.bg)} />}
-              </button>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-none">
+        {[
+          { id: 'active', label: 'Active' },
+          { id: 'pending', label: 'Pending' },
+          { id: 'sold', label: 'Sold' },
+          { id: 'expired', label: 'Expired' }
+        ].map((tab) => (
+          <button 
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as TabState)}
+            className={cn(
+              "h-8 lg:h-9 px-3 lg:px-4 text-xs lg:text-sm font-semibold rounded-full transition-all whitespace-nowrap",
+              activeTab === tab.id 
+                ? "bg-gray-900 text-white" 
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {error && (
-        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 text-sm font-bold animate-in slide-in-from-top-4 duration-300">
-           <AlertTriangle className="w-5 h-5 shrink-0" /> {error}
+      {(error || success) && (
+        <div className={cn(
+          "mb-6 p-3 rounded-xl text-sm font-medium border",
+          error ? "bg-red-50 text-red-800 border-red-100" : "bg-green-50 text-green-800 border-green-100"
+        )}>
+          {error || success}
         </div>
       )}
 
-      {success && (
-        <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3 text-emerald-600 text-sm font-bold animate-in slide-in-from-top-4 duration-300">
-           <CheckCircle className="w-5 h-5 shrink-0" /> {success}
-        </div>
-      )}
-
-      {/* Grid Architecture */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+      {/* Listing Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
         {loading ? (
           <>
             {[1,2,3,4].map(i => (
-                <div key={i} className="h-80 bg-gray-50 rounded-[2.5rem] border border-gray-100 animate-pulse" />
+                <div key={i} className="aspect-[3/4] bg-gray-50 rounded-xl border border-gray-100 animate-pulse" />
             ))}
           </>
         ) : listings.length === 0 ? (
-          <div className="col-span-full p-20 bg-gray-50/50 border border-dashed border-gray-200 rounded-[3rem] flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-sm mb-6">
-                <Inbox className="w-8 h-8 text-gray-200" />
+          <div className="col-span-full py-16 sm:py-24 text-center">
+            <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-4 mx-auto">
+                <Inbox className="w-6 h-6 text-gray-300" />
             </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">No listings found</h3>
-            <p className="text-gray-500 font-medium mb-8 max-w-xs">You have no {activeTab} listings at the moment.</p>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">No listings found</h3>
+            <p className="text-sm text-gray-400 max-w-xs mx-auto">You have no {activeTab} listings at the moment.</p>
             {activeTab === 'active' && (
-              <Link href="/post" className="font-black text-[#2D9A54] hover:gap-3 transition-all flex items-center gap-2 group">
-                 Post your first item <ChevronRight className="w-4 h-4 group-hover:translate-x-1" />
+              <Link href="/post" className="inline-flex items-center justify-center h-10 px-5 text-sm font-semibold rounded-full bg-[#16a34a] text-white mt-5">
+                 Post an item
               </Link>
             )}
           </div>
@@ -189,58 +171,70 @@ export default function Dashboard() {
                 listing={item} 
                 showSeller={false}
                 actions={
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                        <span className={cn(
-                            "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter border",
-                            item.status === 'approved' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
-                            item.status === 'pending' ? "bg-amber-50 text-amber-700 border-amber-100" :
-                            "bg-rose-50 text-rose-700 border-rose-100"
-                        )}>
-                            {item.status === 'approved' ? 'Live' : item.status === 'pending' ? 'Review' : 'Blocked'}
-                        </span>
-                        <span className="text-[9px] font-bold text-gray-400 flex items-center gap-1 uppercase tracking-widest leading-none">
-                            <Clock className="w-3 h-3" />
-                            {formatDistanceToNow(new Date(item.createdAt))}
-                        </span>
-                    </div>
+                  <div className="flex items-center w-full">
+                    {/* Status badge (left) */}
+                    <span className={cn(
+                      "text-[10px] lg:text-xs font-medium px-2 py-0.5 rounded-full",
+                      item.status === 'approved' ? "bg-green-50 text-green-700" :
+                      item.status === 'pending' || item.status === 'under_review' ? "bg-yellow-50 text-yellow-700" :
+                      item.status === 'blocked' ? "bg-red-50 text-red-700" :
+                      item.status === 'sold' ? "bg-gray-100 text-gray-500" :
+                      "bg-gray-100 text-gray-500"
+                    )}>
+                      {item.status === 'approved' ? 'Active' : 
+                       item.status === 'under_review' || item.status === 'pending' ? 'Under review' :
+                       item.status === 'blocked' ? 'Not approved' :
+                       item.status === 'sold' ? 'Sold' : 'Expired'}
+                    </span>
 
-                    <div className="grid grid-cols-2 gap-2">
-                        {item.status === 'approved' && (
-                            <button 
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleBump(item.slug)
-                                }}
-                                disabled={!!actionLoading || !canBump || isOnCooldown}
-                                className={cn(
-                                    "h-9 rounded-lg font-black text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50",
-                                    isOnCooldown || item.bumpCount >= 3 ? "bg-gray-100 text-gray-400" : "bg-emerald-600 text-white shadow-md shadow-emerald-500/10"
-                                )}
-                            >
-                                {actionLoading === `bump-${item.slug}` ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowUpCircle className="w-3.5 h-3.5" />}
-                                {isOnCooldown ? 'Cooldown' : 'Bump'}
-                            </button>
-                        )}
-                        <Link 
-                            href={`/listing/${item.slug}`} 
+                    {/* Action buttons (right, ml-auto) */}
+                    <div className="ml-auto flex items-center gap-1.5">
+                      {item.status === 'approved' ? (
+                        <>
+                          <button 
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleBump(item.slug)
+                            }}
+                            disabled={!!actionLoading || !canBump || isOnCooldown}
+                            className={cn(
+                                "h-7 px-2.5 text-xs font-medium rounded-full transition-all",
+                                isOnCooldown || !canBump ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-[#16a34a] text-white"
+                            )}
+                          >
+                            Bump
+                          </button>
+                          <Link 
+                            href={`/post/edit/${item.slug}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="h-9 px-3 bg-gray-50 text-gray-700 rounded-lg font-black text-[10px] flex items-center justify-center gap-2 hover:bg-gray-100"
+                            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </Link>
+                          <button 
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setListingToDelete(item.slug)
+                                setDeleteModalOpen(true)
+                            }}
+                            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-red-400"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          onClick={(e) => {
+                              e.stopPropagation()
+                              setListingToDelete(item.slug)
+                              setDeleteModalOpen(true)
+                          }}
+                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-red-400"
                         >
-                            <ExternalLink className="w-3.5 h-3.5" /> View
-                        </Link>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
-                    
-                    <button 
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            setListingToDelete(item.slug)
-                            setDeleteModalOpen(true)
-                        }}
-                        className="w-full h-9 text-rose-500 hover:bg-rose-50 rounded-lg font-black text-[10px] transition-colors border border-transparent hover:border-rose-100"
-                    >
-                        <Trash2 className="w-3.5 h-3.5 mx-auto" />
-                    </button>
                   </div>
                 }
               />
@@ -249,12 +243,12 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Delete Confirmation Overlay */}
+      {/* Delete Confirmation */}
       {deleteModalOpen && (
         <ConfirmModal 
-          title="Evacuate Listing?"
-          description="Confirm immediate extraction of this listing from all campus feeds. This action is final for users."
-          actionText="Confirm Extraction"
+          title="Delete listing?"
+          description="This action cannot be undone."
+          actionText="Delete"
           actionVariant="danger"
           onConfirm={handleDeleteExecute}
           onCancel={() => {

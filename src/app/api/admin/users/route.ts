@@ -11,8 +11,11 @@ export const GET = withAdmin(async (req) => {
     const limit = 50
     const skip = (page - 1) * limit
     
-    // Quick search by email or name
     const q = searchParams.get('q')
+    const role = searchParams.get('role')
+    const status = searchParams.get('status')
+    const sort = searchParams.get('sort') || 'newest'
+
     const filter: any = {}
     if (q) {
       filter.$or = [
@@ -21,25 +24,43 @@ export const GET = withAdmin(async (req) => {
       ]
     }
 
+    if (role && ['admin', 'user'].includes(role)) {
+      filter.role = role
+    }
+
+    if (status === 'active') {
+      filter.isActive = true
+    } else if (status === 'banned') {
+      filter.isActive = false
+    }
+
+    const sortMap: Record<string, any> = {
+      newest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      listings: { totalListings: -1 },
+      alpha: { displayName: 1 },
+    }
+
     await connectDB()
 
     const [users, total] = await Promise.all([
       User.find(filter)
-        .sort({ createdAt: -1 })
+        .sort(sortMap[sort] || sortMap.newest)
         .skip(skip)
         .limit(limit)
         .lean(),
       User.countDocuments(filter)
     ])
 
-    // Fetch listing counts for each user concurrently
-    const userPayloads = await Promise.all(users.map(async (u) => {
-       const listingCount = await Listing.countDocuments({ seller: u._id, isDeleted: false })
-       return { ...u, listingCount }
+    // For the UI, we'll use the already populated totalListings or listingCount
+    const userPayloads = users.map(u => ({
+      ...u,
+      listingCount: u.totalListings || 0
     }))
 
     return NextResponse.json({
       users: userPayloads,
+      total,
       pagination: {
         page,
         limit,

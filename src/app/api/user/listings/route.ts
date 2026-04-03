@@ -63,15 +63,34 @@ export const GET = withAuth(async (req, user) => {
     const listings = await Listing.find(filter)
       .sort({ createdAt: -1, _id: -1 })
       .limit(limit + 1)
-      .select('title price images status bumpedAt lastBumpAt bumpCount expiresAt slug aiFlagged createdAt')
+      .select('title price images status bumpedAt lastBumpAt bumpCount expiresAt slug aiFlagged createdAt isExpired sellerBanned')
       .lean()
 
     const hasNext = listings.length > limit
-    const data = hasNext ? listings.slice(0, -1) : listings
+    const rawData = hasNext ? listings.slice(0, -1) : listings
+    
+    // Map status for seller visibility (Hide AI terms)
+    const data = rawData.map((l: any) => {
+      const { aiFlagged, ...rest } = l
+      let displayStatus = l.status
+      
+      if (aiFlagged) {
+        displayStatus = 'under_review'
+      } else if (l.isExpired) {
+        displayStatus = 'expired'
+      } else if (l.sellerBanned) {
+        displayStatus = 'banned'
+      }
+
+      return {
+        ...rest,
+        status: displayStatus
+      }
+    })
     
     let nextCursor = null
     if (hasNext && data.length > 0) {
-      const lastItem = data[data.length - 1]
+      const lastItem = rawData[rawData.length - 1]
       nextCursor = Buffer.from(JSON.stringify({
         createdAt: lastItem.createdAt,
         _id: lastItem._id

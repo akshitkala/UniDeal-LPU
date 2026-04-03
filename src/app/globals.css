@@ -24,6 +24,20 @@
   --color-brand-soft: var(--brand-soft);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  /* Breakpoints Reference (Tailwind defaults are mostly fine, but we'll stick to the spec) */
+  /* xs: < 375px, sm: 375px, md: 640px, lg: 768px, xl: 1024px, 2xl: 1280px */
+
+  /* Typography Scale (Rigid Specification) */
+  --font-size-xs: 12px;     /* 12px - Secondary body, badges, labels */
+  --font-size-sm: 14px;    /* 14px - Primary body, labels, sub-headings */
+  --font-size-base: 16px;      /* 16px - Section headings (sm) */
+  --font-size-lg: 18px;    /* 18px - Section headings (lg) */
+  --font-size-xl: 20px;     /* 20px - Page titles (sm) */
+  --font-size-2xl: 24px;     /* 24px - Page titles (lg) */
+  --font-size-3xl: 30px;   /* 30px - Hero (sm) */
+  --font-size-4xl: 36px;    /* 36px - Hero (md) */
+  --font-size-5xl: 48px;       /* 48px - Hero (xl) */
 }
 
 body {

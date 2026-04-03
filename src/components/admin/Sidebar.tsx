@@ -34,19 +34,21 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] animate-in fade-in duration-300"
+          className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] animate-in fade-in duration-300"
           onClick={onClose}
         />
       )}
  
       <aside className={cn(
-        "fixed lg:sticky lg:top-0 inset-y-0 left-0 z-[120] w-64 bg-white border-r border-[#E5E5E5] flex flex-col h-screen transition-transform duration-300 lg:translate-x-0 lg:flex-shrink-0 shadow-2xl lg:shadow-none",
+        "fixed lg:sticky lg:top-0 inset-y-0 left-0 z-[120] w-60 bg-white border-r border-gray-100 flex flex-col h-screen transition-transform duration-300 lg:translate-x-0 lg:flex-shrink-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="p-6 border-b border-[#E5E5E5] flex items-center justify-between">
-          <Link href="/admin" className="flex flex-col gap-1">
-            <span className="text-xl font-black text-gray-950 tracking-tighter">UniDeal CMS</span>
-            <span className="text-[10px] font-black tracking-widest uppercase text-emerald-600">Governance</span>
+        <div className="py-6 px-3 flex items-center justify-between">
+          <Link href="/admin" className="flex items-center gap-2 group px-3">
+            <div className="w-7 h-7 bg-[#16a34a] rounded-lg flex items-center justify-center transform group-hover:rotate-12 transition-transform shadow-sm">
+               <span className="text-white font-bold text-lg">U</span>
+            </div>
+            <span className="text-lg font-bold text-gray-900 tracking-tight">Admin</span>
           </Link>
           <button 
             onClick={onClose}
@@ -56,7 +58,11 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </button>
         </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+      <div className="px-3">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-3 mb-1 mt-4">Main Menu</p>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href
           
@@ -64,26 +70,27 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             <Link 
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium
-                ${isActive 
-                  ? 'bg-[#2D9A54]/10 text-[#2D9A54]' 
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
-              `}
+              className={cn(
+                "h-9 px-3 rounded-lg text-sm font-medium flex items-center gap-3 transition-colors",
+                isActive 
+                  ? "bg-green-50 text-green-700" 
+                  : "text-gray-600 hover:bg-gray-50"
+              )}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="w-4 h-4" />
               {item.name}
             </Link>
           )
         })}
       </nav>
 
-      <div className="p-4 border-t border-[#E5E5E5]">
+      <div className="p-4 border-t border-gray-100">
         <Link 
           href="/"
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-medium px-4 py-3 transition-colors"
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-800 text-sm font-medium px-3 py-2 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Campus App
+          Campus App
         </Link>
       </div>
       </aside>

@@ -4,7 +4,7 @@ import Listing from '@/lib/db/models/Listing'
 import User from '@/lib/db/models/User'
 import redis from '@/lib/redis/client'
 import { CACHE_KEYS, invalidateListing } from '@/lib/redis/cache'
-import { withAuth } from '@/lib/middleware/auth'
+import { withAuth, getUserFromRequest } from '@/lib/middleware/auth'
 
 /**
  * GET /api/listings/[slug]
@@ -17,43 +17,38 @@ export async function GET(
   try {
     const { slug } = await params
     
-    // 1. Cache Check
-    const cacheKey = CACHE_KEYS.LISTING(slug)
-    const cachedData = await redis.get(cacheKey)
-    if (cachedData) {
-      Listing.findOneAndUpdate({ slug }, { $inc: { views: 1 } }).exec()
-      return NextResponse.json(cachedData)
-    }
-
     await connectDB()
 
-    // 2. Fetch Listing
-    const listing = await Listing.findOne({ slug, isDeleted: false })
+    // Fetch listing with seller populated to check ownership
+    const listing = await Listing.findOne({ slug })
       .populate('category', 'name slug icon')
-      .populate('seller', 'displayName photoURL trustLevel createdAt +whatsappNumber')
+      .populate('seller', 'uid displayName photoURL trustLevel createdAt +whatsappNumber')
       .lean() as any
 
     if (!listing) {
-      return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
+      return NextResponse.json({ error: 'not_found' }, { status: 404 })
     }
 
-    // 3. Visibility Guard
-    if (
-      listing.status !== 'approved' ||
-      listing.sellerBanned ||
-      listing.aiFlagged ||
-      listing.isExpired
-    ) {
-      return NextResponse.json({ error: 'Listing unavailable' }, { status: 404 })
+    // Visibility Check
+    const isApproved = listing.status === 'approved' 
+                       && !listing.isDeleted 
+                       && !listing.sellerBanned 
+                       && !listing.aiFlagged
+                       && !listing.isExpired
+
+    const currentUser = await getUserFromRequest(req)
+    const isOwner = currentUser?.uid === listing.seller.uid
+    const isAdmin = currentUser?.role === 'admin'
+
+    if (!isApproved && !isOwner && !isAdmin) {
+      // Intentional 200 with error: 'not_available' for neutral page handling
+      return NextResponse.json({ error: 'not_available' }, { status: 200 })
     }
 
-    // 4. Cache Detail (30s)
-    await redis.set(cacheKey, listing, { ex: 30 })
-
-    // 5. Track View
+    // Track View (Non-blocking)
     Listing.findOneAndUpdate({ slug }, { $inc: { views: 1 } }).exec()
 
-    return NextResponse.json(listing)
+    return NextResponse.json({ listing })
   } catch (error) {
     console.error(`[Listing Detail GET error]`, error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

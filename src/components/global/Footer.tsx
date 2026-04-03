@@ -14,10 +14,10 @@ export function Footer() {
               </div>
               <span className="text-xl font-bold text-gray-900 tracking-tight">UniDeal</span>
             </Link>
-            <p className="text-xs text-gray-400 leading-relaxed mb-4">
+            <p className="text-sm text-gray-500 leading-relaxed mb-4">
               Campus marketplace — buy and sell, simply.
             </p>
-            <p className="text-[10px] text-gray-400 font-medium italic">
+            <p className="text-xs text-gray-400 font-medium italic">
               © 2026 UniDeal. Not affiliated with any university.
             </p>
           </div>
@@ -27,6 +27,7 @@ export function Footer() {
             <h3 className="text-sm font-bold text-gray-900 mb-4 tracking-tight uppercase">Explore</h3>
             <ul className="flex flex-col gap-3">
               <li><Link href="/browse" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Browse Listings</Link></li>
+              <li><Link href="/about" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">About Our Story</Link></li>
               <li><Link href="/#how-it-works" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">How it works</Link></li>
             </ul>
           </div>
@@ -51,7 +52,7 @@ export function Footer() {
           </div>
         </div>
         
-        <div className="pt-8 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-gray-400 font-medium uppercase tracking-widest text-center sm:text-left">
+        <div className="pt-8 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-400 font-medium uppercase tracking-widest text-center sm:text-left">
           <p>Handcrafted for the campus community</p>
           <div className="flex items-center gap-4">
              <Link href="/terms" className="hover:text-gray-900 transition-colors">Terms</Link>

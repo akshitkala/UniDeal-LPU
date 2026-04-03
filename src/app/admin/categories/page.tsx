@@ -1,20 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FolderTree, Trash2, Loader2, Plus } from 'lucide-react'
+import { Trash2, Loader2, Plus, AlertTriangle, ShieldCheck } from 'lucide-react'
 import { ConfirmModal } from '@/components/global/ConfirmModal'
-import { Banner } from '@/components/global/Banner'
+import { cn } from '@/lib/utils'
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  // Create Category State
   const [newCat, setNewCat] = useState({ name: '', slug: '', icon: '' })
   const [creating, setCreating] = useState(false)
 
-  // Delete/Conflict State
   const [modalType, setModalType] = useState<'delete' | 'conflict' | null>(null)
   const [targetCat, setTargetCat] = useState<any>(null)
   const [conflictListingsCount, setConflictListingsCount] = useState(0)
@@ -30,7 +28,7 @@ export default function CategoryManagement() {
         setError(null)
       }
     } catch {
-      setError('Taxonomy Sync Error: Failed to retrieve category branches.')
+      setError('Failed to load categories.')
     } finally {
       setLoading(false)
     }
@@ -55,10 +53,10 @@ export default function CategoryManagement() {
         fetchCategories()
       } else {
         const d = await res.json()
-        setError(d.error || 'Taxonomy Deployment Failure')
+        setError(d.error || 'Failed to create category.')
       }
     } catch {
-      setError('Vector Disruption: Network error during branch creation.')
+      setError('Error creating category.')
     } finally {
       setCreating(false)
     }
@@ -66,7 +64,6 @@ export default function CategoryManagement() {
 
   const initiateDelete = async (cat: any) => {
     setTargetCat(cat)
-    // Checking collision metric before deleting
     try {
       const res = await fetch(`/api/admin/categories/${cat._id}/check`)
       const { listingCount } = await res.json()
@@ -79,7 +76,7 @@ export default function CategoryManagement() {
       }
       setError(null)
     } catch {
-      setError('Collision Engine Exception: Strategy check failed.')
+      setError('Error checking category status.')
     }
   }
 
@@ -89,7 +86,6 @@ export default function CategoryManagement() {
     try {
       const query = mode === 'reassign' ? `?mode=reassign&reassignToId=${reassignTarget}` : '?mode=cascade'
       const res = await fetch(`/api/admin/categories/${targetCat._id}${query}`, { method: 'DELETE' })
-      const data = await res.json()
       
       if (res.ok) {
         setModalType(null)
@@ -98,91 +94,118 @@ export default function CategoryManagement() {
         setError(null)
         fetchCategories()
       } else {
-        setError(data.error || 'Destruction Routine Failure')
+        const data = await res.json()
+        setError(data.error || 'Failed to delete category.')
       }
     } catch {
-      setError('Critical Sector Interference: Network disruption during deletion.')
+      setError('Error deleting category.')
     } finally {
       setActionLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-7xl mx-auto mb-20">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       
-      <div>
-        <h1 className="text-3xl font-extrabold text-[#1A1A1A]">Taxonomy & Branches</h1>
-        <p className="text-gray-500 mt-1">Manage platform categories and manipulate content architecture trees.</p>
-      </div>
+      <header className="mb-8">
+        <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Categories</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Manage platform listing categories</p>
+      </header>
 
       {error && (
-        <Banner 
-          message={error} 
-          variant="error" 
-          onClose={() => setError(null)} 
-        />
+        <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-xs font-semibold">
+           <AlertTriangle className="w-4 h-4" /> {error}
+        </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Creation Panel */}
-        <div className="lg:col-span-1 flex flex-col gap-4">
-           <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-[#E5E5E5] p-6 shadow-sm flex flex-col gap-4">
-              <h3 className="font-bold flex items-center gap-2 text-xl text-gray-900 border-b border-gray-100 pb-3"><Plus className="w-5 h-5"/> New Branch</h3>
+        {/* Left: Add Category Form */}
+        <div className="lg:col-span-4 self-start">
+           <form onSubmit={handleCreate} className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Plus className="w-4 h-4 text-gray-400" /> Add category
+              </h3>
               
-              <label className="flex flex-col gap-1 text-sm font-semibold text-gray-700">
-                Category Name
-                <input required type="text" value={newCat.name} onChange={e => setNewCat({ name: e.target.value, slug: '', icon: '' })} className="border border-gray-300 rounded-lg h-10 px-3 font-normal" placeholder="e.g. Graphic Cards" />
-              </label>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest pl-1">Name</label>
+                  <input 
+                    required 
+                    type="text" 
+                    value={newCat.name} 
+                    onChange={e => setNewCat({ name: e.target.value, slug: '', icon: '' })} 
+                    className="w-full h-10 px-3 bg-gray-100 border-none rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-[#16a34a10]" 
+                    placeholder="e.g. Electronics" 
+                  />
+                </div>
 
-              <p className="text-[10px] text-gray-400 font-medium italic">
-                The URL slug and system icon will be generated automatically based on the identifier provided above.
-              </p>
-              
-              <button disabled={creating} type="submit" className="mt-2 bg-[#2D9A54] hover:bg-[#258246] text-white font-bold h-11 rounded-lg transition disabled:opacity-50">
-                {creating ? 'Committing...' : 'Deploy Taxonomy'}
-              </button>
+                <p className="text-[10px] text-gray-400 font-medium">
+                  Slug and icon will be generated automatically.
+                </p>
+                
+                <button 
+                  disabled={creating} 
+                  type="submit" 
+                  className="w-full h-10 bg-[#16a34a] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all hover:bg-[#15803d] disabled:opacity-50"
+                >
+                  {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create category'}
+                </button>
+              </div>
            </form>
         </div>
 
-        {/* Categories Table */}
-        <div className="lg:col-span-2 bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden min-h-[400px]">
+        {/* Right: Category Table */}
+        <div className="lg:col-span-8 bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden min-h-[400px]">
           {loading ? (
-            <div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 text-[#2D9A54] animate-spin" /></div>
+            <div className="flex flex-col items-center justify-center h-64 gap-3 opacity-50">
+               <Loader2 className="w-8 h-8 text-[#16a34a] animate-spin" />
+               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Syncing...</span>
+            </div>
           ) : (
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-[#F9F9F9] border-b border-[#E5E5E5] text-gray-500 uppercase text-xs font-bold tracking-wider">
-                <tr>
-                  <th className="p-4">Branch Map</th>
-                  <th className="p-4 text-center">Volume</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E5E5E5]">
-                {categories.map((c) => (
-                  <tr key={c._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[#1A1A1A]">{c.name}</span>
-                        <span className="text-xs text-gray-400 font-mono mt-0.5">/{c.slug}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-center">
-                       {c.listingCount > 0 ? (
-                         <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-bold border border-blue-200">{c.listingCount} items</span>
-                       ) : (
-                         <span className="text-gray-400 font-medium tracking-wide">Empty</span>
-                       )}
-                    </td>
-                    <td className="p-4 flex justify-end">
-                       <button onClick={() => initiateDelete(c)} className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors title='Evacuate & Destroy'">
-                         <Trash2 className="w-5 h-5"/>
-                       </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Category Name</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Items</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {categories.map((c) => (
+                    <tr key={c._id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-gray-900">{c.name}</span>
+                          <span className="text-[10px] text-gray-400 font-mono">/{c.slug}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                         {c.listingCount > 0 ? (
+                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                             {c.listingCount}
+                           </span>
+                         ) : (
+                           <span className="text-xs font-medium text-gray-300 italic">Empty</span>
+                         )}
+                      </td>
+                      <td className="px-6 py-4">
+                         <div className="flex justify-end">
+                            <button 
+                              onClick={() => initiateDelete(c)} 
+                              className="h-9 w-9 bg-red-50 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-100 transition-all"
+                              title="Delete category"
+                            >
+                              <Trash2 className="w-4 h-4"/>
+                            </button>
+                         </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
@@ -190,9 +213,9 @@ export default function CategoryManagement() {
 
       {modalType === 'delete' && (
          <ConfirmModal
-           title="Wipe Empty Category?"
-           description={<>Branch <strong>{targetCat.name}</strong> contains 0 items. It is safe to delete.</>}
-           actionText="Delete Category"
+           title="Delete category"
+           description={<p className="text-gray-600 text-sm">Category <strong>{targetCat.name}</strong> is empty and safe to remove.</p>}
+           actionText="Delete permanently"
            onConfirm={() => executeDelete('cascade')}
            onCancel={() => { setModalType(null); setTargetCat(null) }}
            loading={actionLoading}
@@ -201,41 +224,38 @@ export default function CategoryManagement() {
 
       {modalType === 'conflict' && (
          <ConfirmModal
-           title="Category Conflict Resolution!"
+           title="Category Conflict"
            description={
-             <div className="flex flex-col gap-4 text-left">
-               <p className="text-gray-800 leading-relaxed font-medium">
-                 You are attempting to delete the <strong className="text-red-600">{targetCat.name}</strong> branch, but it currently hosts <strong>{conflictListingsCount} active listings.</strong> 
-                 <br/><br/>
-                 You must resolve this tree conflict by choosing an evacuation target OR forcing a catastrophic Cloudinary/MongoDB cascade wipe across all resident items.
+             <div className="space-y-4 py-2">
+               <p className="text-gray-600 text-sm leading-relaxed">
+                 The category <span className="font-semibold text-gray-900">{targetCat.name}</span> contains <span className="font-semibold text-gray-900">{conflictListingsCount} listings</span>. 
                </p>
 
-               <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex flex-col gap-3">
-                 <h4 className="font-bold text-amber-900 border-b border-amber-200 pb-2">Evacuation Protocol (Safe)</h4>
-                 <label className="flex flex-col gap-1">
-                   <span className="text-xs font-bold text-amber-800 uppercase tracking-widest">Migrate items to:</span>
-                   <select 
-                     value={reassignTarget}
-                     onChange={(e) => setReassignTarget(e.target.value)}
-                     className="w-full h-10 border border-amber-300 rounded font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 bg-white"
-                   >
-                     <option value="" disabled>Select a destination category</option>
-                     {categories.filter(c => c._id !== targetCat._id).map((c) => (
-                        <option key={c._id} value={c._id}>{c.name}</option>
-                     ))}
-                   </select>
-                 </label>
+               <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl space-y-3">
+                 <p className="text-xs font-semibold text-orange-800">Move listings to another category:</p>
+                 <select 
+                   value={reassignTarget}
+                   onChange={(e) => setReassignTarget(e.target.value)}
+                   className="w-full h-10 px-3 border border-orange-200 rounded-lg text-sm font-medium outline-none bg-white"
+                 >
+                   <option value="" disabled>Select destination...</option>
+                   {categories.filter(c => c._id !== targetCat._id).map((c) => (
+                      <option key={c._id} value={c._id}>{c.name}</option>
+                   ))}
+                 </select>
                  <button 
                    onClick={() => executeDelete('reassign')} 
                    disabled={!reassignTarget || actionLoading}
-                   className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 transition text-white font-bold h-10 rounded-lg"
+                   className="w-full h-9 bg-orange-600 text-white rounded-lg text-xs font-semibold disabled:opacity-50 transition-all hover:bg-orange-700"
                  >
-                   {actionLoading ? 'Migrating...' : 'Reassign & Delete Safely'}
+                   {actionLoading ? 'Moving...' : 'Move & safe delete'}
                  </button>
                </div>
+               
+               <p className="text-[10px] text-gray-400 text-center uppercase font-bold tracking-widest pt-2">Or delete everything</p>
              </div>
            }
-           actionText="Force Master Wipe"
+           actionText="Delete all listings"
            actionVariant="danger"
            requireText="DELETE"
            loading={actionLoading}

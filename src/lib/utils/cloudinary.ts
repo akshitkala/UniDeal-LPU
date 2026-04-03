@@ -60,7 +60,6 @@ export async function deleteImages(imageUrls: string[]): Promise<void> {
     }
   }
 }
-
 // Legacy helper for single delete
 export async function deleteImage(publicId: string): Promise<void> {
   try {
