@@ -1,9 +1,9 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { Trash2, Loader2, Plus, AlertTriangle, ShieldCheck } from 'lucide-react'
 import { ConfirmModal } from '@/components/global/ConfirmModal'
 import { cn } from '@/lib/utils'
+import { RecategorizationButton } from '@/components/admin/RecategorizationButton'
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState<any[]>([])
@@ -62,35 +62,20 @@ export default function CategoryManagement() {
     }
   }
 
-  const initiateDelete = async (cat: any) => {
+  const initiateDelete = (cat: any) => {
     setTargetCat(cat)
-    try {
-      const res = await fetch(`/api/admin/categories/${cat._id}/check`)
-      const { listingCount } = await res.json()
-      
-      if (listingCount > 0) {
-        setConflictListingsCount(listingCount)
-        setModalType('conflict')
-      } else {
-        setModalType('delete')
-      }
-      setError(null)
-    } catch {
-      setError('Error checking category status.')
-    }
+    setModalType('delete')
   }
 
-  const executeDelete = async (mode: 'cascade' | 'reassign') => {
+  const executeDelete = async () => {
     if (!targetCat) return
     setActionLoading(true)
     try {
-      const query = mode === 'reassign' ? `?mode=reassign&reassignToId=${reassignTarget}` : '?mode=cascade'
-      const res = await fetch(`/api/admin/categories/${targetCat._id}${query}`, { method: 'DELETE' })
+      const res = await fetch(`/api/admin/categories/${targetCat._id}`, { method: 'DELETE' })
       
       if (res.ok) {
         setModalType(null)
         setTargetCat(null)
-        setReassignTarget('')
         setError(null)
         fetchCategories()
       } else {
@@ -107,9 +92,14 @@ export default function CategoryManagement() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       
-      <header className="mb-8">
-        <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Categories</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Manage platform listing categories</p>
+      <header className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Categories</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Manage categories · Miscellaneous cannot be deleted</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <RecategorizationButton />
+        </div>
       </header>
 
       {error && (
@@ -192,13 +182,19 @@ export default function CategoryManagement() {
                       </td>
                       <td className="px-6 py-4">
                          <div className="flex justify-end">
-                            <button 
-                              onClick={() => initiateDelete(c)} 
-                              className="h-9 w-9 bg-red-50 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-100 transition-all"
-                              title="Delete category"
-                            >
-                              <Trash2 className="w-4 h-4"/>
-                            </button>
+                            {(!c.isProtected && c.slug !== 'miscellaneous') ? (
+                              <button 
+                                onClick={() => initiateDelete(c)} 
+                                className="h-9 w-9 bg-red-50 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-100 transition-all"
+                                title="Delete category"
+                              >
+                                <Trash2 className="w-4 h-4"/>
+                              </button>
+                            ) : (
+                              <div className="h-9 w-9 flex items-center justify-center opacity-20 grayscale" title="Protected category">
+                                <ShieldCheck className="w-4 h-4 text-gray-400" />
+                              </div>
+                            )}
                          </div>
                       </td>
                     </tr>
@@ -214,53 +210,22 @@ export default function CategoryManagement() {
       {modalType === 'delete' && (
          <ConfirmModal
            title="Delete category"
-           description={<p className="text-gray-600 text-sm">Category <strong>{targetCat.name}</strong> is empty and safe to remove.</p>}
-           actionText="Delete permanently"
-           onConfirm={() => executeDelete('cascade')}
-           onCancel={() => { setModalType(null); setTargetCat(null) }}
-           loading={actionLoading}
-         />
-      )}
-
-      {modalType === 'conflict' && (
-         <ConfirmModal
-           title="Category Conflict"
            description={
-             <div className="space-y-4 py-2">
-               <p className="text-gray-600 text-sm leading-relaxed">
-                 The category <span className="font-semibold text-gray-900">{targetCat.name}</span> contains <span className="font-semibold text-gray-900">{conflictListingsCount} listings</span>. 
-               </p>
-
-               <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl space-y-3">
-                 <p className="text-xs font-semibold text-orange-800">Move listings to another category:</p>
-                 <select 
-                   value={reassignTarget}
-                   onChange={(e) => setReassignTarget(e.target.value)}
-                   className="w-full h-10 px-3 border border-orange-200 rounded-lg text-sm font-medium outline-none bg-white"
-                 >
-                   <option value="" disabled>Select destination...</option>
-                   {categories.filter(c => c._id !== targetCat._id).map((c) => (
-                      <option key={c._id} value={c._id}>{c.name}</option>
-                   ))}
-                 </select>
-                 <button 
-                   onClick={() => executeDelete('reassign')} 
-                   disabled={!reassignTarget || actionLoading}
-                   className="w-full h-9 bg-orange-600 text-white rounded-lg text-xs font-semibold disabled:opacity-50 transition-all hover:bg-orange-700"
-                 >
-                   {actionLoading ? 'Moving...' : 'Move & safe delete'}
-                 </button>
-               </div>
-               
-               <p className="text-[10px] text-gray-400 text-center uppercase font-bold tracking-widest pt-2">Or delete everything</p>
-             </div>
+            <div className="space-y-3">
+              <p className="text-gray-600 text-sm">
+                Are you sure you want to delete <strong>{targetCat.name}</strong>?
+              </p>
+              <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
+                <p className="text-[11px] text-amber-800 leading-relaxed font-medium">
+                  <strong>Note:</strong> All listings in this category will be automatically moved to <strong>Miscellaneous</strong> and flagged for AI recategorization.
+                </p>
+              </div>
+            </div>
            }
-           actionText="Delete all listings"
-           actionVariant="danger"
-           requireText="DELETE"
-           loading={actionLoading}
-           onConfirm={() => executeDelete('cascade')}
+           actionText="Delete Category"
+           onConfirm={executeDelete}
            onCancel={() => { setModalType(null); setTargetCat(null) }}
+           loading={actionLoading}
          />
       )}
 

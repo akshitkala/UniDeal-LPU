@@ -5,6 +5,7 @@ export interface ICategory extends Document {
   slug: string       // auto-generated from name
   icon: string       // emoji
   isActive: boolean
+  isProtected: boolean
   order: number
   createdBy: mongoose.Types.ObjectId
   createdAt: Date
@@ -16,6 +17,7 @@ const CategorySchema = new Schema<ICategory>(
     slug: { type: String, required: true, unique: true, lowercase: true },
     icon: { type: String, required: true },
     isActive: { type: Boolean, default: true },
+    isProtected: { type: Boolean, default: false },
     order: { type: Number, default: 0 },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },

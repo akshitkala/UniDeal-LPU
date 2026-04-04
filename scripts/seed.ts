@@ -18,15 +18,7 @@ import { createIndexes } from '../src/lib/db/indexes'
 import Category, { ICategory } from '../src/lib/db/models/Category'
 import Listing from '../src/lib/db/models/Listing'
 import User from '../src/lib/db/models/User'
-
-const CATEGORIES = [
-  { name: 'Electronics', icon: '💻', order: 1 },
-  { name: 'Books & Notes', icon: '📚', order: 2 },
-  { name: 'Clothing', icon: '👗', order: 3 },
-  { name: 'Furniture', icon: '🪑', order: 4 },
-  { name: 'Sports & Fitness', icon: '🏋️', order: 5 },
-  { name: 'Miscellaneous', icon: '📦', order: 6 },
-]
+import { CATEGORIES } from '../src/lib/db/seed/categories'
 
 const CONDITIONS = ['new', 'like-new', 'good', 'used', 'damaged'] as const
 
@@ -77,7 +69,7 @@ async function seed() {
   // Create categories
   const createdCategories: ICategory[] = []
   for (const cat of CATEGORIES) {
-    const slug = cat.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    const slug = (cat as any).slug || cat.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
     const existing = await Category.findOne({ slug })
     if (!existing) {
       const created = await Category.create({
@@ -89,6 +81,12 @@ async function seed() {
       createdCategories.push(created)
       console.log(`[Seed] Created category: ${cat.name}`)
     } else {
+      // Update existing category with protection flag if needed
+      if (cat.isProtected && !existing.isProtected) {
+        existing.isProtected = true;
+        await existing.save();
+        console.log(`[Seed] Updated category protection: ${cat.name}`)
+      }
       createdCategories.push(existing)
       console.log(`[Seed] Category exists: ${cat.name}`)
     }

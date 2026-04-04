@@ -19,7 +19,9 @@ type ActionType =
   | 'CONFIG_UPDATED'
   | 'USER_CASCADE_DELETE'
   | 'LISTING_SOLD'
-  | 'LISTING_DELETED';
+  | 'LISTING_DELETED'
+  | 'RECATEGORIZATION_MANUAL_TRIGGERED'
+  | 'RECATEGORIZATION_CRON_COMPLETED';
 
 /**
  * Standardised audit logging for AdminActivity.
@@ -28,7 +30,7 @@ export async function logAction(
   action: ActionType,
   data: {
     actor?: any;
-    actorType?: 'admin' | 'user' | 'system' | 'deleted_user';
+    actorType?: 'user' | 'system' | 'deleted_user';
     target?: any;
     targetModel?: string;
     metadata?: Record<string, any>;
@@ -38,7 +40,7 @@ export async function logAction(
     await connectDB()
     await AdminActivity.create({
       actor: data.actor,
-      actorType: data.actorType || 'admin',
+      actorType: data.actorType || 'user',
       target: data.target,
       targetModel: data.targetModel || 'System',
       action,

@@ -22,7 +22,7 @@ export const GET = withAdmin(async () => {
   }
 })
 
-export const POST = withAdmin(async (req) => {
+export const POST = withAdmin(async (req, user) => {
   try {
     let { name, slug, icon } = await req.json()
     if (!name) return NextResponse.json({ error: 'Missing Category Name' }, { status: 400 })
@@ -35,10 +35,21 @@ export const POST = withAdmin(async (req) => {
     }
 
     await connectDB()
+    
+    // 1. Get Admin User _id from DB
+    const User = (await import('@/lib/db/models/User')).default
+    const adminUser = await User.findOne({ uid: user.uid })
+    if (!adminUser) return NextResponse.json({ error: 'Admin record not found' }, { status: 404 })
+
     const existing = await Category.findOne({ slug })
     if (existing) return NextResponse.json({ error: `Category slug '${slug}' already exists` }, { status: 400 })
 
-    const category = await Category.create({ name, slug, icon })
+    const category = await Category.create({ 
+      name, 
+      slug, 
+      icon,
+      createdBy: adminUser._id 
+    })
     
     // (Optional) flush directory caching
 

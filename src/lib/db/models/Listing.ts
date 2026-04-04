@@ -35,6 +35,14 @@ export interface IListing extends Document {
   lastBumpAt?: Date
   expiresAt: Date          // createdAt/bumpedAt + 60 days
   isExpired: boolean
+  needsRecategorization: boolean
+  recategorizationHistory: {
+    from: mongoose.Types.ObjectId
+    to: mongoose.Types.ObjectId
+    reason: 'category_deleted' | 'manual_run' | 'monthly_cron'
+    confidence: number
+    movedAt: Date
+  }[]
   soldAt?: Date
   createdAt: Date
   updatedAt: Date
@@ -85,6 +93,19 @@ const ListingSchema = new Schema<IListing>(
     aiFlagged: { type: Boolean, default: false },
     aiUnavailable: { type: Boolean, default: false },
     aiVerification: { type: AIVerificationSchema, default: () => ({}) },
+    needsRecategorization: { type: Boolean, default: false },
+    recategorizationHistory: [
+      {
+        from: { type: Schema.Types.ObjectId, ref: 'Category' },
+        to: { type: Schema.Types.ObjectId, ref: 'Category' },
+        reason: { 
+          type: String, 
+          enum: ['category_deleted', 'manual_run', 'monthly_cron'] 
+        },
+        confidence: { type: Number },
+        movedAt: { type: Date },
+      }
+    ],
     slug: { type: String, required: true, unique: true },
     views: { type: Number, default: 0 },
     bumpedAt: { type: Date },

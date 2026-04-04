@@ -1,8 +1,15 @@
 import { Resend } from 'resend'
 
 const resendRaw = new Resend(process.env.RESEND_API_KEY || 'dummy_key')
-const RESEND_DOMAIN = process.env.RESEND_DOMAIN || 'unideal.app'
-const FROM_EMAIL = `UniDeal <noreply@${RESEND_DOMAIN}>` 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://unideal.app'
+let derivedDomain = 'unideal.app'
+try {
+  derivedDomain = new URL(SITE_URL).host
+} catch (e) {
+  console.error('[Resend Utility] Invalid NEXT_PUBLIC_SITE_URL:', SITE_URL)
+}
+
+const FROM_EMAIL = `UniDeal <noreply@${derivedDomain}>` 
 
 async function trySend(payload: any) {
   if (!process.env.RESEND_API_KEY) {
@@ -32,8 +39,8 @@ export async function sendWelcomeEmail(to: string, name: string) {
       <p>You're on UniDeal — the campus marketplace for buying and selling second-hand items at LPU.</p>
       <p>Browse what's available or list your first item in under a minute.</p>
       <p>
-        <a href="https://unideal.app/browse">[Browse listings]</a> → https://unideal.app/browse<br/>
-        <a href="https://unideal.app">[Sell something]</a> → https://unideal.app
+        <a href="${SITE_URL}/browse">[Browse listings]</a> → ${SITE_URL}/browse<br/>
+        <a href="${SITE_URL}">[Sell something]</a> → ${SITE_URL}
       </p>
       <p>— The UniDeal team</p>
     `
@@ -50,8 +57,8 @@ export async function sendListingRejected(to: string, listingTitle: string, reas
       <p>Your listing "${listingTitle}" was reviewed and couldn't be approved.</p>
       <p><strong>Reason:</strong><br/>${reason}</p>
       <p>You can edit the listing and resubmit it from your dashboard.</p>
-      <p><a href="https://unideal.app/dashboard">[Go to My Dashboard]</a> → https://unideal.app/dashboard</p>
-      <p>If you think this was a mistake, contact us at:<br/>https://unideal.app/contact</p>
+      <p><a href="${SITE_URL}/dashboard">[Go to My Dashboard]</a> → ${SITE_URL}/dashboard</p>
+      <p>If you think this was a mistake, contact us at:<br/>${SITE_URL}/contact</p>
       <p>— UniDeal</p>
     `
   })
@@ -66,7 +73,7 @@ export async function sendListingDeletedByAdminEmail({ to, name, listing, reason
       <p>Hi ${name},</p>
       <p>Your listing "${listing}" has been removed by the UniDeal team.</p>
       <p><strong>Reason:</strong><br/>${reason}</p>
-      <p>If you think this was a mistake, you can reach us here:<br/>https://unideal.app/contact</p>
+      <p>If you think this was a mistake, you can reach us here:<br/>${SITE_URL}/contact</p>
       <p>— UniDeal</p>
     `
   })
@@ -81,7 +88,7 @@ export async function sendListingExpired(to: string, listingTitle: string) {
       <p>Hi there,</p>
       <p>Your listing "${listingTitle}" has been up for 60 days and has now expired. It's no longer visible to buyers.</p>
       <p>If the item is still available, post a fresh listing from your dashboard — it only takes a minute.</p>
-      <p><a href="https://unideal.app/dashboard">[Post again]</a> → https://unideal.app/dashboard</p>
+      <p><a href="${SITE_URL}/dashboard">[Post again]</a> → ${SITE_URL}/dashboard</p>
       <p>— UniDeal</p>
     `
   })
@@ -97,7 +104,7 @@ export async function sendAccountBanned(to: string, reason: string) {
       <p>Your UniDeal account has been suspended.</p>
       <p><strong>Reason:</strong><br/>${reason}</p>
       <p>All your active listings have been hidden.</p>
-      <p>If you think this was a mistake, you can appeal here:<br/>https://unideal.app/contact</p>
+      <p>If you think this was a mistake, you can appeal here:<br/>${SITE_URL}/contact</p>
       <p>— UniDeal</p>
     `
   })
@@ -122,7 +129,7 @@ export async function sendContactMessage(userEmail: string, name: string, userMe
   // To Admin
   await trySend({
     from: FROM_EMAIL,
-    to: process.env.CONTACT_EMAIL || 'admin@unideal.app',
+    to: process.env.CONTACT_EMAIL || `admin@${derivedDomain}`,
     subject: `New message from ${name}`,
     html: `
       <p><strong>Name:</strong> ${name}</p>
@@ -143,3 +150,4 @@ export async function sendContactMessage(userEmail: string, name: string, userMe
     `
   })
 }
+

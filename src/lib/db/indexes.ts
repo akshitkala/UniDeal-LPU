@@ -46,6 +46,9 @@ export async function createIndexes(): Promise<void> {
   // TTL — Mongo will mark expired docs (cron job reads isExpired:false + expiresAt < now)
   await listingColl.createIndex({ expiresAt: 1 })
 
+  // Recategorization job query
+  await listingColl.createIndex({ needsRecategorization: 1, status: 1 })
+
   // Full-text search on title + description
   await listingColl.createIndex({ title: 'text', description: 'text' })
 

@@ -3,5 +3,23 @@
     "src/app/api/**": {
       "regions": ["bom1"]
     }
-  }
+  },
+  "crons": [
+    { 
+      "path": "/api/cron/expire-listings",  
+      "schedule": "0 2 * * *"    
+    },
+    { 
+      "path": "/api/cron/retry-ai",         
+      "schedule": "*/30 * * * *"  
+    },
+    { 
+      "path": "/api/cron/backup",           
+      "schedule": "0 3 * * 0"    
+    },
+    { 
+      "path": "/api/cron/recategorize",     
+      "schedule": "0 3 1 * *"    
+    }
+  ]
 }
