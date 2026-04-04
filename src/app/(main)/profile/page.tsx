@@ -38,7 +38,10 @@ export default function ProfilePage() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    // Check for the non-httpOnly session_hint cookie
+    const sessionHint = typeof document !== 'undefined' && document.cookie.includes('session_hint')
+    
+    if (!authLoading && !user && !sessionHint) {
       router.push('/login?returnTo=/profile')
       return
     }

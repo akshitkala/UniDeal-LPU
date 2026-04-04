@@ -11,7 +11,7 @@ import * as fs from 'fs';
 
 async function runTests() {
   console.log('🚀 Starting Resend Email Service Tests...');
-  const testEmail = 'test@example.com';
+  const testEmail = 'akshitkala72@gmail.com';
   const results: any[] = [];
 
   const tests = [

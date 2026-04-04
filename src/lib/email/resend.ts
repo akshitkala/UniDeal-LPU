@@ -4,7 +4,13 @@ const resendRaw = new Resend(process.env.RESEND_API_KEY || 'dummy_key')
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://unideal.app'
 let derivedDomain = 'unideal.app'
 try {
-  derivedDomain = new URL(SITE_URL).host
+  const url = new URL(SITE_URL)
+  // Use hostname to strip ports (Resend rejects domains with colons)
+  derivedDomain = url.hostname
+  // Fallback to unideal.app if testing locally (localhost doesn't have a TLD)
+  if (derivedDomain === 'localhost' || !derivedDomain.includes('.')) {
+    derivedDomain = 'unideal.app'
+  }
 } catch (e) {
   console.error('[Resend Utility] Invalid NEXT_PUBLIC_SITE_URL:', SITE_URL)
 }

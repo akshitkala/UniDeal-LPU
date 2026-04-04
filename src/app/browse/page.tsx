@@ -193,7 +193,7 @@ function BrowseContent() {
       
       {/* STICKY FILTER BAR */}
       <div className="sticky top-14 sm:top-16 z-30 bg-white border-b border-gray-100 py-2 lg:py-3 transition-all">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-6">
           
           {/* Desktop Filter Row */}
           <div className="hidden lg:flex items-center gap-3">
@@ -324,7 +324,7 @@ function BrowseContent() {
       </div>
 
       {/* RESULTS GRID */}
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-6 py-8 w-full flex-1">
         
         <div className="mb-6">
            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
@@ -345,7 +345,7 @@ function BrowseContent() {
         </div>
 
         {loading && listings.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] bg-gray-50 rounded-xl border border-gray-100 animate-pulse" />
             ))}
@@ -374,7 +374,7 @@ function BrowseContent() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 lg:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
               {listings.map((listing, index) => (
                 <ListingCard 
                   key={listing._id} 
@@ -474,8 +474,8 @@ function BrowseContent() {
 export default function BrowsePage() {
   return (
     <Suspense fallback={
-       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-32">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-8">
+       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-6 py-32">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
             {Array.from({ length: 12 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}

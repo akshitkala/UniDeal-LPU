@@ -4,7 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import { createIndexes } from '@/lib/db/indexes'
 import User from '@/lib/db/models/User'
 import { signAccessToken, signRefreshToken } from '@/lib/auth/jwt'
-import { setAccessTokenCookie, setRefreshTokenCookie } from '@/lib/auth/cookies'
+import { setAccessTokenCookie, setRefreshTokenCookie, setSessionHintCookie } from '@/lib/auth/cookies'
 import AdminActivity from '@/lib/db/models/AdminActivity'
 import { sendWelcomeEmail } from '@/lib/email/resend'
 import { checkRateLimit } from '@/lib/middleware/rateLimit'
@@ -90,12 +90,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Issue both tokens
-    const accessToken = await signAccessToken(jwtPayload)
     const refreshToken = await signRefreshToken(jwtPayload)
+    const accessToken = await signAccessToken(jwtPayload)
 
     // Set HTTP-only cookies (SameSite=Strict, Secure in prod)
     await setAccessTokenCookie(accessToken)
     await setRefreshTokenCookie(refreshToken)
+    
+    // Set non-httpOnly session hint for UI state pre-population
+    await setSessionHintCookie({
+      uid: user.uid,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      role: user.role
+    })
 
     // Log registration for new users
     if (isNewUser) {

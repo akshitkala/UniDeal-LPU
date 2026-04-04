@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyRefreshToken, signAccessToken } from '@/lib/auth/jwt'
-import { setAccessTokenCookie, getRefreshTokenFromRequest } from '@/lib/auth/cookies'
+import { setAccessTokenCookie, setSessionHintCookie, getRefreshTokenFromRequest } from '@/lib/auth/cookies'
 import { connectDB } from '@/lib/db/connect'
 import User from '@/lib/db/models/User'
 
@@ -44,6 +44,14 @@ export async function POST(req: NextRequest) {
     })
 
     await setAccessTokenCookie(newAccessToken)
+
+    // Update session hint with fresh data
+    await setSessionHintCookie({
+      uid: user.uid,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      role: user.role
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

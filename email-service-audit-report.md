@@ -1,6 +1,6 @@
 # Resend Email Service Audit Report
 
-**Timestamp:** 2026-04-03T13:56:04.723Z
+**Timestamp:** 2026-04-04T11:32:24.153Z
 **Environment:** Production
 
 ## Summary
@@ -13,10 +13,10 @@
 
 | Test Case | Status | Details |
 |-----------|--------|---------|
-| Welcome Email | ❌ Fail | {"statusCode":422,"name":"validation_error","message":"Invalid `from` field. The email address needs to follow the `email@example.com` or `Name <email@example.com>` format."} |
-| Listing Rejected | ❌ Fail | {"statusCode":422,"name":"validation_error","message":"Invalid `from` field. The email address needs to follow the `email@example.com` or `Name <email@example.com>` format."} |
-| Listing Deleted by Admin | ❌ Fail | {"statusCode":422,"name":"validation_error","message":"Invalid `from` field. The email address needs to follow the `email@example.com` or `Name <email@example.com>` format."} |
-| Listing Expired | ❌ Fail | {"statusCode":422,"name":"validation_error","message":"Invalid `from` field. The email address needs to follow the `email@example.com` or `Name <email@example.com>` format."} |
-| Account Banned | ❌ Fail | {"statusCode":422,"name":"validation_error","message":"Invalid `from` field. The email address needs to follow the `email@example.com` or `Name <email@example.com>` format."} |
-| Account Deleted | ❌ Fail | {"statusCode":422,"name":"validation_error","message":"Invalid `from` field. The email address needs to follow the `email@example.com` or `Name <email@example.com>` format."} |
-| Contact Message (Admin & User) | ❌ Fail | {"statusCode":422,"name":"validation_error","message":"Invalid `from` field. The email address needs to follow the `email@example.com` or `Name <email@example.com>` format."} |
+| Welcome Email | ❌ Fail | {"statusCode":403,"message":"The unideal.app domain is not verified. Please, add and verify your domain on https://resend.com/domains","name":"validation_error"} |
+| Listing Rejected | ❌ Fail | {"statusCode":403,"message":"The unideal.app domain is not verified. Please, add and verify your domain on https://resend.com/domains","name":"validation_error"} |
+| Listing Deleted by Admin | ❌ Fail | {"statusCode":403,"message":"The unideal.app domain is not verified. Please, add and verify your domain on https://resend.com/domains","name":"validation_error"} |
+| Listing Expired | ❌ Fail | {"statusCode":403,"message":"The unideal.app domain is not verified. Please, add and verify your domain on https://resend.com/domains","name":"validation_error"} |
+| Account Banned | ❌ Fail | {"statusCode":403,"message":"The unideal.app domain is not verified. Please, add and verify your domain on https://resend.com/domains","name":"validation_error"} |
+| Account Deleted | ❌ Fail | {"statusCode":403,"message":"The unideal.app domain is not verified. Please, add and verify your domain on https://resend.com/domains","name":"validation_error"} |
+| Contact Message (Admin & User) | ❌ Fail | {"statusCode":403,"message":"The unideal.app domain is not verified. Please, add and verify your domain on https://resend.com/domains","name":"validation_error"} |

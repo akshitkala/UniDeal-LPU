@@ -6,7 +6,7 @@ import { logAction } from '@/lib/utils/logAction'
 import User from '@/lib/db/models/User'
 
 /**
- * PATCH: Resolve or Dismiss a Report (Fix 15).
+ * PATCH: Resolve or Dismiss a Report (A-03).
  */
 export const PATCH = withAdmin(async (req, user, context) => {
   try {
@@ -16,7 +16,7 @@ export const PATCH = withAdmin(async (req, user, context) => {
     const body = await req.json()
     const { action, note } = body
 
-    if (!['dismiss', 'resolve'].includes(action)) {
+    if (!['reviewed', 'dismissed'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
@@ -24,24 +24,23 @@ export const PATCH = withAdmin(async (req, user, context) => {
     const adminUser = await User.findOne({ uid: user.uid })
     if (!adminUser) return NextResponse.json({ error: 'Admin not found' }, { status: 404 })
 
-    const updatedStatus = action === 'dismiss' ? 'dismissed' : 'reviewed'
-    
     const report = await Report.findByIdAndUpdate(id, {
-      status: updatedStatus,
-      reviewedBy: adminUser._id
+      status: action,
+      reviewedBy: adminUser._id,
+      reviewedAt: new Date()
     })
 
     if (!report) return NextResponse.json({ error: 'Report not found' }, { status: 404 })
 
-    // Log the audit trail (Fix 8 requirement concept applied here)
-    await logAction(action === 'dismiss' ? 'REPORT_DISMISSED' : 'REPORT_REVIEWED', {
+    // Log the audit trail
+    await logAction(action === 'dismissed' ? 'REPORT_DISMISSED' : 'REPORT_REVIEWED', {
       actor: adminUser._id,
-      target: id,
+      target: id as any,
       targetModel: 'Report',
-      metadata: { note, status: updatedStatus }
+      metadata: { note, listingId: report.listing }
     })
 
-    return NextResponse.json({ success: true, status: updatedStatus })
+    return NextResponse.json({ success: true, status: action })
   } catch (error) {
     console.error('[/api/admin/reports/[id] PATCH error]', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

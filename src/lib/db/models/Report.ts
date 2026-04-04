@@ -17,6 +17,7 @@ export interface IReport extends Document {
   description?: string
   status: ReportStatus
   reviewedBy?: mongoose.Types.ObjectId
+  reviewedAt?: Date
   createdAt: Date
 }
 
@@ -36,6 +37,7 @@ const ReportSchema = new Schema<IReport>(
       default: 'pending',
     },
     reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    reviewedAt: { type: Date },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 )

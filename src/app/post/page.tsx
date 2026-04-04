@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/auth/AuthProvider'
 import { compressImage } from '@/lib/utils/compressImage'
 import { listingSchema } from '@/lib/utils/validate'
 import { 
@@ -37,6 +38,15 @@ export default function PostListing() {
     condition: '',
     whatsappNumber: '',
   })
+
+  const { user, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    const sessionHint = typeof document !== 'undefined' && document.cookie.includes('session_hint')
+    if (!authLoading && !user && !sessionHint) {
+      router.push('/login?returnTo=/post')
+    }
+  }, [user, authLoading, router])
 
   useEffect(() => {
     async function fetchCategories() {

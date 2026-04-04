@@ -28,11 +28,29 @@ export async function setRefreshTokenCookie(token: string): Promise<void> {
   })
 }
 
-// Clear both cookies on logout or ban
+// Session Hint: 7 days (non-httpOnly for UI state pre-population)
+export async function setSessionHintCookie(user: { uid: string, displayName: string, photoURL?: string, role: string }): Promise<void> {
+  const cookieStore = await cookies()
+  cookieStore.set('session_hint', JSON.stringify({
+    uid: user.uid,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+    role: user.role
+  }), {
+    httpOnly: false,
+    secure: isProduction,
+    sameSite: 'strict' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
+  })
+}
+
+// Clear both auth and hint cookies on logout or ban
 export async function clearAuthCookies(): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.set('access_token', '', { ...COOKIE_OPTIONS, maxAge: 0 })
   cookieStore.set('refresh_token', '', { ...COOKIE_OPTIONS, maxAge: 0 })
+  cookieStore.set('session_hint', '', { httpOnly: false, path: '/', maxAge: 0 })
 }
 
 // Read access token value (for middleware/route handlers)

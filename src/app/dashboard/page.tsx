@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuth } from '@/components/auth/AuthProvider'
 import Link from 'next/link'
 import { addDays, isAfter } from 'date-fns'
 import { getRelativeTime } from '@/lib/utils/time'
@@ -13,6 +14,7 @@ import { ListingCard } from '@/components/listing/ListingCard'
 type TabState = 'active' | 'review' | 'rejected' | 'sold'
 
 function DashboardContent() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabState>('active')
   const [listings, setListings] = useState<any[]>([])
   const [counts, setCounts] = useState<any>({ active: 0, review: 0, rejected: 0, sold: 0 })
@@ -29,6 +31,14 @@ function DashboardContent() {
   const [success, setSuccess] = useState<string | null>(null)
   
   const searchParams = useSearchParams()
+  const { user, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    const sessionHint = document.cookie.includes('session_hint')
+    if (!authLoading && !user && !sessionHint) {
+      router.push('/login?returnTo=/dashboard')
+    }
+  }, [user, authLoading, router])
 
   useEffect(() => {
     const msg = searchParams.get('success')

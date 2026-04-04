@@ -29,7 +29,7 @@ export function Navbar() {
   return (
     <>
       <nav className="sticky top-0 left-0 right-0 h-14 sm:h-16 bg-white border-b border-gray-100 z-50">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-6 h-full flex items-center justify-between gap-4">
           
           {/* Left: Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0 min-w-[44px] min-h-[44px]">
@@ -47,7 +47,7 @@ export function Navbar() {
               <Link href="/#how-it-works" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">How it works</Link>
             </div>
 
-            <div className="relative w-full max-w-xs flex-1">
+            <div className="relative w-full max-w-sm flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
                 type="text" 
