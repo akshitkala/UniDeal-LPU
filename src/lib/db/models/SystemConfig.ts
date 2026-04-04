@@ -34,11 +34,13 @@ const SystemConfig: Model<ISystemConfig> =
 
 // Helper to get or create the singleton config
 export async function getSystemConfig(): Promise<ISystemConfig> {
-  let config = await SystemConfig.findById('global')
-  if (!config) {
-    config = await SystemConfig.create({ _id: 'global' })
-  }
-  return config
+  // DB-002: Atomic initialization using findOneAndUpdate with upsert:true
+  const config = await SystemConfig.findOneAndUpdate(
+    { _id: 'global' },
+    { $setOnInsert: { _id: 'global' } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )
+  return config as ISystemConfig
 }
 
 export default SystemConfig

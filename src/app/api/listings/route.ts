@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
     let listingsQuery = Listing.find(filter, CARD_PROJECTION)
       .limit(limit + 1)
       .populate('category', 'name slug')
-      .populate('seller', 'displayName email photoURL') // Fix 3.3
+      .populate('seller', 'displayName photoURL') // SEC-003: Removed email
       .lean() // Fix 1.3
 
     if (q) {

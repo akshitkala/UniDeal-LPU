@@ -14,55 +14,52 @@ export const POST = withAuth(async (req, user, context) => {
 
     await connectDB()
 
-    const dbUser = await User.findOne({ uid: userId })
-    if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-
-    const listing = await Listing.findOne({ slug })
-    if (!listing) return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
-
-    if (listing.seller.toString() !== dbUser._id.toString()) {
-      return NextResponse.json({ error: 'Unauthorized to bump this listing' }, { status: 403 })
-    }
-
-    if (listing.status !== 'approved' || listing.isDeleted || listing.aiFlagged) {
-      return NextResponse.json({ error: 'Cannot bump an unapproved or deleted listing' }, { status: 400 })
-    }
-
-    // Cooldown logic
-    if (listing.bumpCount >= 3) {
-      return NextResponse.json({ error: 'Max bumps reached (3/3)' }, { status: 400 })
-    }
-
     const now = new Date()
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const expiresAt = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000)
 
-    if (listing.lastBumpAt && listing.lastBumpAt > sevenDaysAgo) {
-      const nextBumpAt = new Date(listing.lastBumpAt.getTime() + 7 * 24 * 60 * 60 * 1000)
+    // ATOMIC BUMP (Fix RACE-001): Atomic check-and-update prevents race conditions
+    const listing = await Listing.findOneAndUpdate(
+      { 
+        slug, 
+        seller: user.dbId,
+        status: 'approved',
+        isDeleted: false,
+        aiFlagged: false,
+        bumpCount: { $lt: 3 },
+        $or: [
+          { lastBumpAt: { $exists: false } },
+          { lastBumpAt: { $lte: sevenDaysAgo } }
+        ]
+      },
+      { 
+        $set: { 
+          bumpedAt: now, 
+          lastBumpAt: now,
+          expiresAt: expiresAt
+        },
+        $inc: { bumpCount: 1 }
+      },
+      { new: true }
+    )
+
+    if (!listing) {
+      // If none found, either listing doesn't exist, not owned, or cooldown/limit active
+      // We can do a secondary check to return a specific error message if needed, 
+      // but for atomic performance, a generic fail is safer for high-frequency attempts.
       return NextResponse.json({ 
-        error: `Bump on cooldown. Next bump available at: ${nextBumpAt.toISOString()}` 
+        error: 'Bump unavailable. Listing may be on cooldown, reached max bumps (3/3), or is not approved.' 
       }, { status: 400 })
     }
-
-    // Apply Bump
-    listing.bumpedAt = now
-    listing.lastBumpAt = now
-    listing.bumpCount += 1
-    listing.expiresAt = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000) // Extends expiry by 60 days
-
-    await listing.save()
 
     // Flush Redis Detail Cache
     await redis.del(`listing:detail:${slug}`)
     await invalidateBrowseCache()
 
-    // Compute remaining bumps and next availability
-    const bumpsRemaining = 3 - listing.bumpCount
-    const nextBumpAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-
     return NextResponse.json({ 
       success: true,
-      bumpsRemaining,
-      nextBumpAt: nextBumpAt.toISOString()
+      bumpsRemaining: 3 - listing.bumpCount,
+      nextBumpAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
     })
 
   } catch (error) {

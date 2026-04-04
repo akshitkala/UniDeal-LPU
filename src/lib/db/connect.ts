@@ -23,7 +23,7 @@ export async function connectDB() {
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
-      maxPoolSize: 10,
+      maxPoolSize: 5, // Atlas M0 optimization (limit is 500 across all users)
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 10000,
     })

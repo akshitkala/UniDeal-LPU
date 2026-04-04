@@ -174,10 +174,10 @@ export default function ListingDetail() {
         router.push('/dashboard?success=Listing deleted')
       } else {
         const data = await res.json()
-        alert(data.error || 'Failed to delete listing')
+        setError(data.error || 'Failed to delete listing')
       }
     } catch (err) {
-      alert('Network error')
+      setError('Network error - please check your connection')
     } finally {
       setIsDeleting(false)
       setIsDeleteModalOpen(false)
@@ -335,7 +335,7 @@ export default function ListingDetail() {
                    </div>
                    <div className="flex flex-col">
                       <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Pickup</span>
-                      <span className="text-xs font-semibold text-gray-900">LPU Campus</span>
+                      <span className="text-xs font-semibold text-gray-900">Campus Pickup</span>
                    </div>
                 </div>
           </div>

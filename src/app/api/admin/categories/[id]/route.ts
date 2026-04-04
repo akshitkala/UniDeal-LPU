@@ -4,6 +4,7 @@ import Listing from '@/lib/db/models/Listing';
 import { logAction } from '@/lib/utils/logAction';
 import redis from '@/lib/redis/client';
 import { withAdmin } from '@/lib/middleware/auth';
+import { deleteImages } from '@/lib/utils/cloudinary';
 import { NextResponse } from 'next/server';
 
 export const DELETE = withAdmin(async (req, user, context) => {
@@ -27,36 +28,18 @@ export const DELETE = withAdmin(async (req, user, context) => {
       );
     }
 
-    const miscellaneous = await Category.findOne({ slug: 'miscellaneous' });
-    if (!miscellaneous) {
-      return NextResponse.json(
-        { error: 'Miscellaneous category not found — cannot safely delete' },
-        { status: 500 }
-      );
-    }
+    // DB-003: Hard delete all listings under this category (Rule 166)
+    const categoryListings = await Listing.find({ category: id })
+    const allImages: string[] = []
+    categoryListings.forEach(l => {
+      if (l.images?.length) allImages.push(...l.images)
+    })
 
-    // Move all listings to miscellaneous + flag them
-    const affected = await Listing.updateMany(
-      { 
-        category: id,
-        isDeleted: false 
-      },
-      {
-        $set: { 
-          category: miscellaneous._id,
-          needsRecategorization: true
-        },
-        $push: {
-          recategorizationHistory: {
-            from: id,
-            to: miscellaneous._id,
-            reason: 'category_deleted',
-            confidence: 1,
-            movedAt: new Date()
-          }
-        }
-      }
-    );
+    if (allImages.length > 0) {
+      deleteImages(allImages).catch(err => console.error('[CASCADE] Cloudinary sweep failed:', err))
+    }
+    
+    const affected = await Listing.deleteMany({ category: id })
 
     // Delete the category
     await Category.findByIdAndDelete(id);
@@ -69,19 +52,19 @@ export const DELETE = withAdmin(async (req, user, context) => {
 
     // Audit log
     await logAction('CATEGORY_DELETED', {
-      actor: user.uid,
+      actor: user.dbId,
       actorType: 'user',
       target: id,
       targetModel: 'Category',
       metadata: {
         categoryName: category.name,
-        listingsMoved: affected.modifiedCount
+        listingsDeleted: affected.deletedCount
       }
     });
 
     return NextResponse.json({
       success: true,
-      listingsMoved: affected.modifiedCount
+      listingsDeleted: affected.deletedCount
     });
 
   } catch (error) {

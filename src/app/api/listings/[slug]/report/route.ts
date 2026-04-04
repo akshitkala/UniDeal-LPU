@@ -34,20 +34,28 @@ export const POST = withAuth(async (req, user, context) => {
     const listing = await Listing.findOne({ slug, isDeleted: false })
     if (!listing) return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
 
-    // 3. Duplicate check
-    const existing = await Report.findOne({ listing: listing._id, reportedBy: userId })
-    if (existing) {
+    // 3. ATOMIC REPORT SUBMISSION (Fix RACE-003)
+    // - Uses upsert to prevent duplicate reports from the same user via race conditions.
+    // - $setOnInsert ensures fields are only set if it's a new document.
+    const now = new Date()
+    const report = await Report.findOneAndUpdate(
+      { listing: listing._id, reportedBy: userId },
+      { 
+        $setOnInsert: { 
+          listing: listing._id,
+          reportedBy: userId,
+          reason,
+          description: description?.slice(0, 500),
+          status: 'pending',
+          createdAt: now
+        } 
+      },
+      { upsert: true, new: false }
+    )
+
+    if (report) {
       return NextResponse.json({ error: 'You have already reported this listing.' }, { status: 400 })
     }
-
-    // 4. Create Report
-    await Report.create({
-      listing: listing._id,
-      reportedBy: userId,
-      reason,
-      description: description?.slice(0, 500),
-      status: 'pending'
-    })
 
     // 5. Update Listing Stats & Log
     await Listing.findByIdAndUpdate(listing._id, { $inc: { reportCount: 1 } })

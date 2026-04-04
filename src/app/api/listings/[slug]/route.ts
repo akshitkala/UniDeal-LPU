@@ -35,7 +35,7 @@ export async function GET(
     // Fetch listing with seller populated to check ownership
     const listing = await Listing.findOne({ slug })
       .populate('category', 'name slug icon')
-      .populate('seller', 'uid displayName photoURL trustLevel createdAt +whatsappNumber')
+      .populate('seller', 'uid displayName photoURL trustLevel createdAt')
       .lean() as any
 
     if (!listing) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withAdmin } from '@/lib/middleware/auth'
 import { connectDB } from '@/lib/db/connect'
 import Listing from '@/lib/db/models/Listing'
+import { retryListingAI } from '@/lib/ai/retryListing'
 
 export const GET = withAdmin(async (req) => {
   try {
@@ -18,6 +19,23 @@ export const GET = withAdmin(async (req) => {
     const skip = (page - 1) * limit
 
     await connectDB()
+
+    // Lazy Retry Pattern: If admin is viewing pending queue, 
+    // trigger background retries for any trapped AI verification.
+    if (status === 'pending') {
+      const unchecked = await Listing.find({
+        status: 'pending',
+        aiUnavailable: true,
+        isDeleted: false,
+        createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      }).limit(5).select('_id').lean()
+      
+      if (unchecked.length > 0) {
+        unchecked.forEach(l => {
+          retryListingAI(l._id.toString()).catch(() => {})
+        })
+      }
+    }
 
     const filter: any = { isDeleted: false }
 

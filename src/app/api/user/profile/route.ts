@@ -18,7 +18,7 @@ export const GET = withAuth(async (req, user) => {
   try {
     await connectDB()
     const dbUser = await User.findOne({ uid: user.uid })
-      .select('displayName email isLpuVerified photoURL bio createdAt role')
+      .select('displayName email photoURL bio createdAt role')
       .lean()
       
     if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })

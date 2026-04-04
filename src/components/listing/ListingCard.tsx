@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'
 import { useRef } from 'react'
 import { getCardImageUrl } from '@/lib/utils/images'
+import { getRelativeTime } from '@/lib/utils/time'
 
 export interface ListingCardProps {
   listing: {
@@ -64,7 +65,16 @@ export function ListingCard({ listing, showSeller = true, actions, priority = fa
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={() => router.push(`/listing/${listing.slug}`)}
-      className="rounded-xl border border-gray-100 bg-white overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200 flex flex-col h-full"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          router.push(`/listing/${listing.slug}`)
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for ${listing.title}`}
+      className="rounded-xl border border-gray-100 bg-white overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200 flex flex-col h-full focus:ring-2 focus:ring-[#16a34a] focus:outline-none"
     >
       {/* Image Area */}
       <div className="aspect-square w-full bg-gray-50 relative overflow-hidden">
@@ -135,7 +145,7 @@ export function ListingCard({ listing, showSeller = true, actions, priority = fa
             <div />
           )}
           <span className="text-xs text-gray-300 shrink-0 ml-1">
-            Now
+            {getRelativeTime(listing.bumpedAt || listing.createdAt)}
           </span>
         </div>
 

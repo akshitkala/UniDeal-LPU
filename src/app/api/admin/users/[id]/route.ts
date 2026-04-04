@@ -63,28 +63,46 @@ export const PATCH = withAdmin(async (req, user, context) => {
 
     const previousStatus = targetUser.isActive
 
-    // ATOMIC MODIFICATION: The Ban Flow
+    // ATOMIC MODIFICATION (Fix RACE-002): Atomic Ban Flow
     if (action === 'ban') {
-      targetUser.isActive = false // Blocks future JWT handshakes at login endpoints
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: id, isActive: true },
+        { $set: { isActive: false } },
+        { new: true }
+      )
 
-      // Propagate cascading "sellerBanned" flag to all active listings, killing them natively from queries
+      if (!updatedUser) {
+        // If modifiedCount is 0, user was already banned or doesn't exist
+        return NextResponse.json({ error: 'User already banned or not found' }, { status: 400 })
+      }
+
+      // Propagate cascading "sellerBanned" flag to all active listings
       await Listing.updateMany(
-         { seller: targetUser._id },
+         { seller: id },
          { $set: { sellerBanned: true } }
       )
     } 
     // UNBAN FLOW:
     else if (action === 'unban') {
-      targetUser.isActive = true
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: id, isActive: false },
+        { $set: { isActive: true } },
+        { new: true }
+      )
+
+      if (!updatedUser) {
+        return NextResponse.json({ error: 'User already active or not found' }, { status: 400 })
+      }
 
       // Reverse cascade
       await Listing.updateMany(
-         { seller: targetUser._id },
+         { seller: id },
          { $set: { sellerBanned: false } }
       )
     }
 
-    await targetUser.save()
+    // Refresh memory for logging
+    const adminUserDoc = await User.findOne({ uid: user.uid })
 
     // Create Audit Vector
     await AdminActivity.create({
