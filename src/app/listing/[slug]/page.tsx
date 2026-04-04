@@ -94,7 +94,7 @@ export default function ListingDetail() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
         <div className="h-4 bg-gray-100 rounded w-48 mb-8"></div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="aspect-square bg-gray-50 rounded-xl"></div>
@@ -110,7 +110,7 @@ export default function ListingDetail() {
 
   if (error || !listing) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-32 text-center flex flex-col items-center">
+      <div className="max-w-[1440px] mx-auto px-4 py-32 text-center flex flex-col items-center">
         <div className="w-16 h-16 bg-gray-50 text-gray-200 rounded-full flex items-center justify-center mb-6">
            <Package className="w-8 h-8" />
         </div>
@@ -189,7 +189,7 @@ export default function ListingDetail() {
   const isFlagged = listing.aiFlagged
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
       
       {/* Status Banners */}
       {(isPending || isBanned || isFlagged || listing.status === 'sold') && (

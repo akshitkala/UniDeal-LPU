@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen flex flex-col bg-white text-gray-950 antialiased`}>
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 pb-24 md:pb-16 mt-0">
+          <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 pb-24 md:pb-16 mt-0">
             {children}
           </main>
           <Footer />

@@ -148,7 +148,7 @@ async function checkCategorization(
   categoryNames: string,
   categories: any[]
 ) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = `
     You are a marketplace categorization assistant. Return JSON only.

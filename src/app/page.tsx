@@ -73,7 +73,7 @@ export default function Home() {
       
       {/* HERO SECTION */}
       <section className="w-full bg-white py-10 lg:py-16 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             
             {/* Left Column */}
@@ -141,7 +141,7 @@ export default function Home() {
 
       {/* LISTINGS SECTION */}
       <section className="bg-white py-10 lg:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="flex justify-between items-end mb-8">
             <div>
@@ -178,7 +178,7 @@ export default function Home() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 lg:gap-8">
               {listings.map((listing, index) => (
                 <ListingCard key={listing._id} listing={listing} priority={index < 4} />
               ))}
@@ -189,7 +189,7 @@ export default function Home() {
 
       {/* WHY SECTION */}
       <section className="bg-white py-10 lg:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest block mb-1">
               Why UniDeal
@@ -239,7 +239,7 @@ export default function Home() {
 
       {/* HOW IT WORKS SECTION */}
       <section id="how-it-works" className="bg-gray-50 py-10 lg:py-16 border-y border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center mb-10">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest block mb-1">Simple steps</span>
@@ -280,7 +280,7 @@ export default function Home() {
 
       {/* SELL CTA */}
       <section className="bg-white py-10 lg:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-[#16a34a] rounded-2xl p-10 lg:p-16 text-center text-white">
             <h2 className="text-2xl lg:text-3xl font-bold mb-4">
               Turn your clutter into cash
