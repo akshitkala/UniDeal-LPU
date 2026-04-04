@@ -6,16 +6,12 @@
   },
   "crons": [
     { 
-      "path": "/api/cron/expire-listings",  
+      "path": "/api/cron/expiry",  
       "schedule": "0 2 * * *"    
     },
     { 
-      "path": "/api/cron/retry-ai",         
+      "path": "/api/cron/ai-retry",         
       "schedule": "*/30 * * * *"  
-    },
-    { 
-      "path": "/api/cron/backup",           
-      "schedule": "0 3 * * 0"    
     },
     { 
       "path": "/api/cron/recategorize",     
