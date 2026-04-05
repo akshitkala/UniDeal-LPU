@@ -35,8 +35,11 @@ function ForgotPasswordContent() {
             <MailCheck className="w-8 h-8 text-[#16a34a]" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
-          <p className="text-gray-500 mb-8">
+          <p className="text-gray-500 mb-2">
             We've sent a password reset link to <span className="font-semibold text-gray-900">{email}</span>.
+          </p>
+          <p className="text-[11px] text-gray-400 font-medium mb-8 italic">
+            Check your spam folder if you don't see the email.
           </p>
           <Link 
             href="/login" 

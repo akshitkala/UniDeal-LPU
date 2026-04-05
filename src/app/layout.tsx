@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: 'UniDeal | Campus Marketplace',
   description: 'The direct campus-to-campus marketplace. Buy and sell second-hand goods safely within your community.',
   keywords: 'campus marketplace, campus deals, second hand electronics, used books, university marketplace',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 }
 
 export default function RootLayout({
