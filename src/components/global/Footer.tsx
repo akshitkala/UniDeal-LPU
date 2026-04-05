@@ -48,6 +48,7 @@ export function Footer() {
             <ul className="flex flex-col gap-3">
               <li><Link href="/contact" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Contact Us</Link></li>
               <li><Link href="/privacy" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>

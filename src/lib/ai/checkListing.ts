@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { logAction } from '@/lib/utils/logAction'
+import * as Sentry from '@sentry/nextjs'
 
 const SPAM_KEYWORDS = [
   'casino', 'betting', 'sugar daddy', 'assignment help', 'proxy attendance',
@@ -109,6 +110,10 @@ export async function checkListingAI(
       reason: reasons.join(' | ')
     }
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { area: 'ai-check' },
+      extra: { title }
+    });
     return await handleAIUnavailable(title, error)
   }
 }

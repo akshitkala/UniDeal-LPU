@@ -191,53 +191,68 @@ export default function ListingDetail() {
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
       
-      {/* Status Banners */}
-      {(isPending || isBanned || isFlagged || listing.status === 'sold') && (
+      {/* Status Banners (Mutually Exclusive for Owner) */}
+      {isOwner && (
         <div className="flex flex-col gap-3 mb-8">
-            {listing.status === 'sold' && (
+          {(() => {
+            if (listing.status === 'sold') {
+              return (
                 <div className="p-4 bg-gray-900 border border-gray-800 rounded-2xl flex items-center gap-3 text-white text-sm font-bold shadow-xl">
-                    <CheckCircle2 className="w-5 h-5 shrink-0 text-[#16a34a]" /> 
-                    <span>This item has been sold.</span>
-                    {isOwner && <span className="ml-auto text-[10px] uppercase tracking-widest text-gray-400">Archived</span>}
+                  <CheckCircle2 className="w-5 h-5 shrink-0 text-[#16a34a]" /> 
+                  <span>This item has been sold.</span>
+                  <span className="ml-auto text-[10px] uppercase tracking-widest text-gray-400">Archived</span>
                 </div>
-            )}
-            {isOwner && (
-                <>
-                    {isPending && (
-                        <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between gap-3 text-indigo-700 text-sm font-medium shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <Clock className="w-5 h-5 shrink-0" />
-                                <span>This listing is pending approval and is only visible to you.</span>
-                            </div>
-                            <Link href={`/listing/${slug}/edit`} className="bg-indigo-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-indigo-700 transition-all shrink-0">
-                                Edit now
-                            </Link>
-                        </div>
-                    )}
-                    {isFlagged && (
-                        <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-between gap-3 text-amber-700 text-sm font-medium shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <ShieldAlert className="w-5 h-5 shrink-0" />
-                                <span>This listing is under review and is currently hidden from other users.</span>
-                            </div>
-                            <Link href={`/listing/${slug}/edit`} className="bg-amber-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-amber-700 transition-all shrink-0">
-                                Edit
-                            </Link>
-                        </div>
-                    )}
-                    {(listing.status === 'rejected') && (
-                        <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex flex-col gap-3 text-red-700 text-sm font-medium shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <AlertCircle className="w-5 h-5 shrink-0" />
-                                <span>This listing was rejected for: <strong>{listing.rejectionReason || 'Policy Violation'}</strong></span>
-                            </div>
-                            <Link href={`/listing/${slug}/edit`} className="bg-red-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-red-700 transition-all w-fit self-end">
-                                Fix & Repost
-                            </Link>
-                        </div>
-                    )}
-                </>
-            )}
+              );
+            }
+            if (listing.status === 'pending') {
+              return (
+                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between gap-3 text-indigo-700 text-sm font-medium shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-5 h-5 shrink-0" />
+                    <span>This listing is pending approval and is only visible to you.</span>
+                  </div>
+                  <Link href={`/listing/${slug}/edit`} className="bg-indigo-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-indigo-700 transition-all shrink-0">
+                    Edit now
+                  </Link>
+                </div>
+              );
+            }
+            if (listing.status === 'rejected') {
+              return (
+                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex flex-col gap-3 text-red-700 text-sm font-medium shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <span>This listing was rejected for: <strong>{listing.rejectionReason || 'Policy Violation'}</strong></span>
+                  </div>
+                  <Link href={`/listing/${slug}/edit`} className="bg-red-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-red-700 transition-all w-fit self-end">
+                    Edit and resubmit
+                  </Link>
+                </div>
+              );
+            }
+            if (isFlagged) {
+              return (
+                <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-between gap-3 text-amber-700 text-sm font-medium shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <ShieldAlert className="w-5 h-5 shrink-0" />
+                    <span>This listing is under review and is currently hidden from other users.</span>
+                  </div>
+                  <Link href={`/listing/${slug}/edit`} className="bg-amber-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-amber-700 transition-all shrink-0">
+                    Edit
+                  </Link>
+                </div>
+              );
+            }
+            return null;
+          })()}
+        </div>
+      )}
+
+      {/* Non-owner Status Banner (Sold only) */}
+      {!isOwner && listing.status === 'sold' && (
+        <div className="p-4 bg-gray-900 border border-gray-800 rounded-2xl flex items-center gap-3 text-white text-sm font-bold shadow-xl mb-8">
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-[#16a34a]" /> 
+          <span>This item has been sold.</span>
         </div>
       )}
 

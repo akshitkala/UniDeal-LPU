@@ -4,12 +4,11 @@ import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
 import Link from 'next/link'
-import { addDays, isAfter } from 'date-fns'
 import { getRelativeTime } from '@/lib/utils/time'
-import { Edit, Trash2, ArrowUpCircle, CheckCircle, Clock, Inbox, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Inbox } from 'lucide-react'
 import { ConfirmModal } from '@/components/global/ConfirmModal'
 import { cn } from '@/lib/utils'
-import { ListingCard } from '@/components/listing/ListingCard'
+import { DashboardCard } from '@/components/listing/DashboardCard'
 
 type TabState = 'active' | 'review' | 'rejected' | 'sold'
 
@@ -62,7 +61,8 @@ function DashboardContent() {
   const fetchListings = async (tab: TabState) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/user/listings?status=${tab}&limit=50`)
+      const apiStatus = tab === 'review' ? 'pending' : tab
+      const res = await fetch(`/api/user/listings?status=${apiStatus}&limit=50`)
       const data = await res.json()
       if (res.ok) {
         setListings(data.listings)
@@ -114,10 +114,10 @@ function DashboardContent() {
         fetchListings(activeTab)
       } else {
         const data = await res.json()
-        setError(data.error || 'Failed to mark as sold.')
+        setError(data.error || 'Something went wrong. Please try again.')
       }
     } catch (error) {
-      setError('Network error.')
+      setError('Something went wrong. Please try again.')
     } finally {
       setActionLoading(null)
     }
@@ -137,10 +137,10 @@ function DashboardContent() {
         fetchListings(activeTab)
       } else {
         const data = await res.json()
-        setError(data.error || 'Failed to delete listing.')
+        setError(data.error || 'Something went wrong. Please try again.')
       }
     } catch (error) {
-      setError('Network error.')
+      setError('Something went wrong. Please try again.')
     } finally {
       setActionLoading(null)
     }
@@ -224,89 +224,41 @@ function DashboardContent() {
             )}
           </div>
         ) : (
-          listings.map((item) => {
-            const canBump = item.bumpCount < 3 && item.status === 'approved' && !item.aiFlagged
-            const nextBumpDate = item.lastBumpAt ? addDays(new Date(item.lastBumpAt), 7) : null
-            const isOnCooldown = !!(nextBumpDate && isAfter(nextBumpDate, new Date()))
-
-            return (
-              <ListingCard 
-                key={item._id} 
-                listing={item} 
-                showSeller={false}
-                actions={
-                  <div className="flex flex-col gap-2 w-full">
-                    {/* Status badge (left) */}
-                    <div className="flex items-center justify-between w-full">
-                        <span className={cn(
-                        "text-[10px] lg:text-xs font-medium px-2 py-0.5 rounded-full",
-                        item.status === 'approved' ? "bg-green-50 text-green-700" :
-                        item.status === 'pending' || item.status === 'under_review' ? "bg-yellow-50 text-yellow-700" :
-                        item.status === 'blocked' ? "bg-red-50 text-red-700" :
-                        item.status === 'sold' ? "bg-gray-100 text-gray-500" :
-                        "bg-gray-100 text-gray-500"
-                        )}>
-                            {item.status === 'approved' ? 'Active' : 
-                            item.status === 'under_review' || item.status === 'pending' ? 'Under review' :
-                            item.status === 'blocked' ? 'Not approved' :
-                            item.status === 'sold' ? 'Sold' : 'Expired'}
-                        </span>
-                        
-                        {item.status === 'approved' && (
-                            <button 
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleBump(item.slug)
-                                }}
-                                disabled={!!actionLoading || !canBump || isOnCooldown}
-                                className={cn(
-                                    "h-7 px-2.5 text-xs font-medium rounded-full transition-all",
-                                    isOnCooldown || !canBump ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-[#16a34a] text-white"
-                                )}
-                            >
-                                Bump
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Action buttons Row */}
-                    <div className={cn(
-                      "w-full gap-1.5",
-                      activeTab === 'active' ? "grid grid-cols-2 lg:flex lg:items-center" : "flex items-center"
-                    )}>
-                      {activeTab === 'active' && (
-                        <>
-                          <Link 
-                            href={`/post/edit/${item.slug}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex-1 lg:flex-none lg:w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600 transition-all border border-gray-100"
-                            title="Edit"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                            <span className="lg:hidden ml-1.5 text-[10px] font-bold uppercase tracking-tight">Edit</span>
-                          </Link>
-                          <button 
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                setSelectedSlug(item.slug)
-                                setDeleteModalOpen(true)
-                            }}
-                            className="flex-1 lg:flex-none lg:w-8 h-8 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-all border border-red-100"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span className="lg:hidden ml-1.5 text-[10px] font-bold uppercase tracking-tight">Delete</span>
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                }
-              />
-            )
-          })
+          listings.map((item) => (
+            <DashboardCard 
+              key={item._id} 
+              item={item} 
+              actionLoading={actionLoading}
+              onBump={handleBump}
+              onSold={(slug) => {
+                setSelectedSlug(slug)
+                setSoldModalOpen(true)
+              }}
+              onDelete={(slug) => {
+                setSelectedSlug(slug)
+                setDeleteModalOpen(true)
+              }}
+              activeTab={activeTab}
+            />
+          ))
         )}
       </div>
+
+      {/* Mark as Sold Confirmation */}
+      {soldModalOpen && (
+        <ConfirmModal 
+          title="Mark as sold?"
+          description="Mark this listing as sold? Buyers will no longer see it."
+          actionText="Mark as sold"
+          actionVariant="primary"
+          onConfirm={handleSoldExecute}
+          onCancel={() => {
+            setSoldModalOpen(false)
+            setSelectedSlug(null)
+          }}
+          loading={!!actionLoading?.startsWith('sold')}
+        />
+      )}
 
       {/* Delete Confirmation */}
       {deleteModalOpen && (

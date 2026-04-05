@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { signInWithGoogle, signInWithEmail } from '@/lib/auth/firebase'
+import { signInWithGoogle, registerWithEmail } from '@/lib/auth/firebase'
 import { getAuthErrorMessage } from '@/lib/utils/authErrors'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
@@ -19,16 +19,17 @@ function GoogleIcon({ className }: { className?: string }) {
   )
 }
 
-function LoginContent() {
+function RegisterContent() {
   const { user, loading: authLoading, setUser } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  // Email form states
+  // Form states
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -54,15 +55,19 @@ function LoginContent() {
     }
   }
 
-  async function handleEmailLogin(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
+    if (password !== confirmPassword) {
+      setError(getAuthErrorMessage('Passwords do not match'))
+      return
+    }
     setLoading(true)
     setError(null)
     try {
-      const idToken = await signInWithEmail(email, password)
+      const idToken = await registerWithEmail(email, password)
       await handleAuthSuccess(idToken)
     } catch (err: any) {
-      console.error('[Email Login Error]', err)
+      console.error('[Register Error]', err)
       setError(getAuthErrorMessage(err))
     } finally {
       setLoading(false)
@@ -76,7 +81,7 @@ function LoginContent() {
       const idToken = await signInWithGoogle()
       await handleAuthSuccess(idToken)
     } catch (err: any) {
-      console.error('[Google Login Error]', err)
+      console.error('[Google Auth Error]', err)
       setError(getAuthErrorMessage(err))
     } finally {
       setLoading(false)
@@ -91,12 +96,12 @@ function LoginContent() {
         {/* Logo */}
         <div className="text-center mb-8">
           <span className="text-2xl font-bold text-[#16a34a]">UniDeal</span>
-          <p className="text-sm text-gray-500 mt-1">Campus marketplace</p>
+          <p className="text-sm text-gray-500 mt-1">Join the community</p>
         </div>
 
         {/* Card */}
         <div className="border border-gray-100 rounded-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-500">
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 ml-1">
                 Email
@@ -111,19 +116,27 @@ function LoginContent() {
               />
             </div>
             <div>
-              <div className="flex items-center justify-between mb-1.5 ml-1">
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Password
-                </label>
-                <Link href="/forgot-password" className="text-xs text-[#16a34a] font-bold hover:underline">
-                    Forgot password?
-                </Link>
-              </div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 ml-1">
+                Password
+              </label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:border-[#16a34a] focus:ring-1 focus:ring-[#16a34a] outline-none transition-all text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 ml-1">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:border-[#16a34a] focus:ring-1 focus:ring-[#16a34a] outline-none transition-all text-sm"
               />
@@ -140,7 +153,7 @@ function LoginContent() {
               disabled={loading}
               className="w-full h-11 bg-[#16a34a] hover:bg-green-700 text-white rounded-full font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 mt-2"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Sign in'}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Create account'}
             </button>
           </form>
 
@@ -165,29 +178,21 @@ function LoginContent() {
           </button>
 
           <p className="text-center text-sm text-gray-500 mt-8">
-            Don't have an account?{' '}
-            <Link href="/register" className="text-[#16a34a] font-bold hover:underline">
-              Register
+            Already have an account?{' '}
+            <Link href="/login" className="text-[#16a34a] font-bold hover:underline">
+              Sign in
             </Link>
           </p>
-        </div>
-
-        {/* Global Footer in Login */}
-        <div className="mt-8 text-center">
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-                Not affiliated with any university
-            </p>
         </div>
       </div>
     </div>
   )
 }
 
-
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <Suspense fallback={null}>
-      <LoginContent />
+      <RegisterContent />
     </Suspense>
   )
 }

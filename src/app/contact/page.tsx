@@ -1,33 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Send, CheckCircle, AlertTriangle, Loader2, Mail, User, BookOpen } from 'lucide-react'
+import { useAuth } from '@/components/auth/AuthProvider'
+import { Send, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function ContactPage() {
-  const [user, setUser] = useState<{ displayName?: string, email?: string } | null>(null)
+  const { user } = useAuth()
   
   const [formData, setFormData] = useState({ name: '', email: '', subject: 'general', message: '' })
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'rate_limited' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
+  // Prefill when user state changes
   useEffect(() => {
-    let mounted = true
-    const checkSession = async () => {
-      try {
-        const res = await fetch('/api/user/profile')
-        if (res.ok) {
-          const data = await res.json()
-          if (mounted) {
-            setUser(data)
-            setFormData(prev => ({ ...prev, name: data.displayName || '', email: data.email || '' }))
-          }
-        }
-      } catch (e) { /* silent fail on guest */ }
+    if (user) {
+      setFormData(prev => ({ 
+          ...prev, 
+          name: prev.name || user.displayName || '', 
+          email: prev.email || user.email || '' 
+      }))
     }
-    checkSession()
-    return () => { mounted = false }
-  }, [])
+  }, [user])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

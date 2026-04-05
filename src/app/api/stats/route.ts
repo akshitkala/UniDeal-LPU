@@ -46,7 +46,7 @@ export async function GET() {
     }
 
     // 3. Write to Cache
-    await redis.setex(CACHE_KEY, CACHE_TTL, JSON.stringify(stats))
+    await redis.set(CACHE_KEY, stats, { ex: CACHE_TTL })
 
     return NextResponse.json(stats)
   } catch (error) {

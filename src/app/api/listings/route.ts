@@ -13,6 +13,7 @@ import { browseSchema, listingSchema } from '@/lib/utils/validate'
 import { validateMimeType } from '@/lib/utils/validateMime'
 import { checkListingAI } from '@/lib/ai/checkListing'
 import { nanoid } from 'nanoid'
+import { expandQuery } from '@/lib/utils/searchExpand'
 
 /**
  * GET: Browse Listings with CURSOR-BASED PAGINATION (Fix 6)
@@ -91,7 +92,7 @@ export async function GET(req: NextRequest) {
       if (minPrice !== undefined) filter.price.$gte = minPrice
       if (maxPrice !== undefined) filter.price.$lte = maxPrice
     }
-    if (q) filter.$text = { $search: q }
+    if (q) filter.$text = { $search: expandQuery(q) }
 
     // Cursor for stable pagination
     if (cursor) {
@@ -124,22 +125,22 @@ export async function GET(req: NextRequest) {
       
       const stats = (plan as any).executionStats
       console.log('[Query Audit]', {
-        stage: stats.executionStages?.stage,
-        docsExamined: stats.totalDocsExamined,
-        docsReturned: stats.totalDocsReturned,
-        executionTimeMs: stats.executionTimeMillis,
-        indexUsed: stats.executionStages?.indexName || 'NONE — COLLSCAN DETECTED'
+        stage: stats?.executionStages?.stage || 'UNKNOWN',
+        docsExamined: stats?.totalDocsExamined || 0,
+        docsReturned: stats?.totalDocsReturned || 0,
+        executionTimeMs: stats?.executionTimeMillis || 0,
+        indexUsed: stats?.executionStages?.indexName || 'NONE — COLLSCAN DETECTED'
       })
     }
 
     const queryStart = Date.now()
     
-    // Parallel Execute (Fix 1.5)
+    // Tier 1: Exact $text search (fast, indexed)
     let listingsQuery = Listing.find(filter, CARD_PROJECTION)
       .limit(limit + 1)
       .populate('category', 'name slug')
-      .populate('seller', 'displayName photoURL') // SEC-003: Removed email
-      .lean() // Fix 1.3
+      .populate('seller', 'displayName photoURL')
+      .lean()
 
     if (q) {
       listingsQuery = listingsQuery.select({ score: { $meta: 'textScore' } })
@@ -148,10 +149,31 @@ export async function GET(req: NextRequest) {
       listingsQuery = listingsQuery.sort({ bumpedAt: -1, createdAt: -1 })
     }
 
-    const [listings, total] = await Promise.all([
-      listingsQuery,
-      cursor ? Promise.resolve(null) : Listing.countDocuments(filter)
-    ])
+    let listings = await listingsQuery
+    const total = cursor ? null : await Listing.countDocuments(filter)
+
+    // Tier 2: Regex fallback (fuzzy) if exact results < 3
+    if (q && listings.length < 3) {
+      const tokens = q.split(/\s+/).filter(Boolean)
+      const regexOr = tokens.map(t => ({
+        title: { $regex: t, $options: 'i' }
+      }))
+      
+      const fallbackFilter = { ...filter }
+      delete fallbackFilter.$text
+      fallbackFilter.$or = regexOr
+
+      const fallback = await Listing.find(fallbackFilter, CARD_PROJECTION)
+        .sort({ bumpedAt: -1 })
+        .limit(limit)
+        .populate('category', 'name slug')
+        .populate('seller', 'displayName photoURL')
+        .lean()
+      
+      // Merge and deduplicate by _id
+      const seen = new Set(listings.map((r: any) => r._id.toString()))
+      listings = [...listings, ...fallback.filter((r: any) => !seen.has(r._id.toString()))]
+    }
 
     if (process.env.NODE_ENV === 'development') {
       console.log('[Timing] Query execution:', Date.now() - queryStart, 'ms')

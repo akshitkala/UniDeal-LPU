@@ -9,7 +9,8 @@ import {
   PackageCheck,
   AlertTriangle,
   CheckCircle2,
-  Zap
+  Zap,
+  ArrowUp
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ListingCard } from '@/components/listing/ListingCard'
@@ -277,6 +278,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
 
       {/* SELL CTA */}
       <section className="bg-white py-10 lg:py-16">

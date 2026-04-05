@@ -25,10 +25,7 @@ export const GET = withAuth(async (req, user) => {
       }),
       Listing.countDocuments({
         seller: dbUser._id,
-        $or: [
-          { status: { $in: ['pending', 'under_review'] } },
-          { aiFlagged: true, status: 'approved' }
-        ],
+        status: 'pending',
         isDeleted: false
       }),
       Listing.countDocuments({

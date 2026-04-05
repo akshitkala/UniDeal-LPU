@@ -33,11 +33,8 @@ export const GET = withAuth(async (req, user) => {
       filter.status = 'approved'
       filter.aiFlagged = false
       filter.isExpired = false
-    } else if (statusTab === 'review') {
-      filter.$or = [
-        { status: 'pending', aiFlagged: false },
-        { status: 'approved', aiFlagged: true }
-      ]
+    } else if (statusTab === 'pending') {
+      filter.status = 'pending'
     } else if (statusTab === 'rejected') {
       filter.status = 'rejected'
     } else if (statusTab === 'sold') {
@@ -71,7 +68,10 @@ export const GET = withAuth(async (req, user) => {
       const { aiFlagged, ...rest } = l
       let displayStatus = l.status
       
-      if (aiFlagged) {
+      // PRIORITY: Rejected items always show as rejected (Fix dashboard UI)
+      if (l.status === 'rejected') {
+        displayStatus = 'rejected'
+      } else if (aiFlagged) {
         displayStatus = 'under_review'
       } else if (l.isExpired) {
         displayStatus = 'expired'

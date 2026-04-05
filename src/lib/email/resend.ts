@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import * as Sentry from '@sentry/nextjs'
 
 const resendRaw = new Resend(process.env.RESEND_API_KEY || 'dummy_key')
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://unideal.app'
@@ -31,6 +32,10 @@ async function trySend(payload: any) {
     return { success: true, data }
   } catch (err) {
     console.error('[Resend Exception]', err)
+    Sentry.captureException(err, {
+      tags: { area: 'email' },
+      extra: { subject: payload.subject, to: payload.to }
+    });
     return { success: false, error: err }
   }
 }
@@ -156,4 +161,7 @@ export async function sendContactMessage(userEmail: string, name: string, userMe
     `
   })
 }
+
+
+
 

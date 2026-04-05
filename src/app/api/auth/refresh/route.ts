@@ -3,6 +3,7 @@ import { verifyRefreshToken, signAccessToken } from '@/lib/auth/jwt'
 import { setAccessTokenCookie, setSessionHintCookie, getRefreshTokenFromRequest } from '@/lib/auth/cookies'
 import { connectDB } from '@/lib/db/connect'
 import User from '@/lib/db/models/User'
+import * as Sentry from '@sentry/nextjs'
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     // Re-check ban status on every refresh — critical for banned users
     await connectDB()
-    const user = await User.findOne({ uid: payload.uid }).select('isActive role displayName')
+    const user = await User.findOne({ uid: payload.uid }).select('isActive role displayName photoURL')
 
     if (!user || !user.isActive) {
       return NextResponse.json(
@@ -56,6 +57,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[/api/auth/refresh]', error)
+    Sentry.captureException(error, {
+      tags: { area: 'auth-refresh' }
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -37,17 +37,19 @@ export async function POST(req: NextRequest) {
 
     await connectDB()
 
-    const newMessage = await ContactMessage.create({
+    const newMessage = new ContactMessage({
       name,
       email,
       subject,
-      message
+      message,
+      // ipAddress: ip // optional but good practice
     })
+    await newMessage.save()
 
     // Dispatch asynchronous communications
     await sendContactMessage(email, name, message)
 
-    return NextResponse.json({ success: true, messageId: newMessage._id }, { status: 201 })
+    return NextResponse.json({ success: true, messageId: (newMessage._id as any).toString() }, { status: 201 })
   } catch (error) {
     console.error('[/api/contact POST error]', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
