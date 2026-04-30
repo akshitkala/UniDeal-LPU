@@ -1,99 +1,84 @@
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { cn } from '@/lib/utils'
-import { Avatar } from '@/components/ui/Avatar'
-import { useRef } from 'react'
-import { getCardImageUrl } from '@/lib/utils/images'
-import { getRelativeTime } from '@/lib/utils/time'
-
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
+import { Avatar } from '@/components/ui/Avatar';
+import { useRef } from 'react';
+import { getCardImageUrl } from '@/lib/utils/images';
+import { getRelativeTime } from '@/lib/utils/time';
 export interface ListingCardProps {
   listing: {
-    _id: string
-    slug: string
-    title: string
-    price: number
-    condition: string
-    images: string[]
-    negotiable: boolean
-    bumpedAt?: string
-    createdAt: string
-    category: { name: string, slug: string }
-    seller: { displayName: string, photoURL?: string }
-  }
-  showSeller?: boolean
-  actions?: React.ReactNode
-  priority?: boolean
+    _id: string;
+    slug: string;
+    title: string;
+    price: number;
+    condition: string;
+    images: string[];
+    negotiable: boolean;
+    bumpedAt?: string;
+    createdAt: string;
+    category: {
+      name: string;
+      slug: string;
+    };
+    seller: {
+      displayName: string;
+      photoURL?: string;
+    };
+  };
+  showSeller?: boolean;
+  actions?: React.ReactNode;
+  priority?: boolean;
 }
-
-export function ListingCard({ listing, showSeller = true, actions, priority = false }: ListingCardProps) {
-
-  const router = useRouter()
-  const prefetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const imageUrl = listing.images?.[0] ? getCardImageUrl(listing.images[0]) : null
-  
+export function ListingCard({
+  listing,
+  showSeller = true,
+  actions,
+  priority = false
+}: ListingCardProps) {
+  const router = useRouter();
+  const prefetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const imageUrl = listing.images?.[0] ? getCardImageUrl(listing.images[0]) : null;
   const handleMouseEnter = () => {
     prefetchTimer.current = setTimeout(() => {
-      router.prefetch(`/listing/${listing.slug}`)
-    }, 200)
-  }
-
+      router.prefetch(`/listing/${listing.slug}`);
+    }, 200);
+  };
   const handleMouseLeave = () => {
     if (prefetchTimer.current) {
-      clearTimeout(prefetchTimer.current)
+      clearTimeout(prefetchTimer.current);
     }
-  }
-
+  };
   const getConditionStyles = (condition?: string) => {
-    if (!condition) return 'bg-gray-50 text-gray-700'
+    if (!condition) return 'bg-gray-50 text-gray-700';
     switch (condition.toLowerCase()) {
       case 'new':
-      case 'like-new': return 'bg-green-50 text-green-700'
-      case 'good': return 'bg-blue-50 text-blue-700'
-      case 'used': return 'bg-amber-50 text-amber-700'
-      case 'damaged': return 'bg-red-50 text-red-700'
-      default: return 'bg-gray-50 text-gray-700'
+      case 'like-new':
+        return 'bg-green-50 text-green-700';
+      case 'good':
+        return 'bg-blue-50 text-blue-700';
+      case 'used':
+        return 'bg-amber-50 text-amber-700';
+      case 'damaged':
+        return 'bg-red-50 text-red-700';
+      default:
+        return 'bg-gray-50 text-gray-700';
     }
-  }
-
+  };
   const formatCondition = (condition?: string) => {
-    if (!condition) return 'Unknown'
-    return condition.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-  }
-
-  return (
-    <div 
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={() => router.push(`/listing/${listing.slug}`)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          router.push(`/listing/${listing.slug}`)
-        }
-      }}
-      tabIndex={0}
-      role="button"
-      aria-label={`View details for ${listing.title}`}
-      className="rounded-xl border border-gray-100 bg-white overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200 flex flex-col h-full focus:ring-2 focus:ring-[#16a34a] focus:outline-none"
-    >
+    if (!condition) return 'Unknown';
+    return condition.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
+  return <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={() => router.push(`/listing/${listing.slug}`)} onKeyDown={e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      router.push(`/listing/${listing.slug}`);
+    }
+  }} tabIndex={0} role="button" aria-label={`View details for ${listing.title}`} className="rounded-xl border border-gray-100 bg-white overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200 flex flex-col h-full focus:ring-2 focus:ring-[#16a34a] focus:outline-none">
       {/* Image Area */}
       <div className="aspect-square w-full bg-gray-50 relative overflow-hidden">
-        {imageUrl ? (
-          <Image 
-            src={imageUrl} 
-            alt={listing.title} 
-            fill
-            priority={priority}
-            loading={priority ? undefined : 'lazy'}
-            className="object-contain p-3 w-full h-full" 
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          />
-
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-200">
+        {imageUrl ? <Image src={imageUrl} alt={listing.title} fill priority={priority} loading={priority ? undefined : 'lazy'} className="object-contain p-3 w-full h-full" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" /> : <div className="w-full h-full flex items-center justify-center text-gray-200">
             <span className="text-2xl">📦</span>
-          </div>
-        )}
+          </div>}
       </div>
 
       {/* Body */}
@@ -103,10 +88,7 @@ export function ListingCard({ listing, showSeller = true, actions, priority = fa
           <span className="text-xs text-gray-400 truncate max-w-[60%]">
             {listing.category?.name || 'Item'}
           </span>
-          <span className={cn(
-            "text-xs font-medium px-1.5 py-0.5 rounded-full",
-            getConditionStyles(listing.condition)
-          )}>
+          <span className={cn("text-xs font-medium px-1.5 py-0.5 rounded-full", getConditionStyles(listing.condition))}>
             {formatCondition(listing.condition).toLowerCase()}
           </span>
         </div>
@@ -121,41 +103,26 @@ export function ListingCard({ listing, showSeller = true, actions, priority = fa
           <span className="text-base font-bold text-gray-900">
             ₹{listing.price.toLocaleString('en-IN')}
           </span>
-          {listing.negotiable && (
-            <span className="text-xs bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-medium">
-              Nego
-            </span>
-          )}
+          {listing.negotiable && <span className="text-xs bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Nego</span>}
         </div>
 
         {/* Row 4 — seller + timestamp */}
         <div className="flex items-center justify-between mt-2">
-          {showSeller ? (
-            <div className="flex items-center gap-1.5 truncate">
-               <Avatar 
-                src={listing.seller?.photoURL} 
-                name={listing.seller?.displayName}
-                className="w-4 h-4"
-              />
+          {showSeller ? <div className="flex items-center gap-1.5 truncate">
+               <Avatar src={listing.seller?.photoURL} name={listing.seller?.displayName} className="w-4 h-4" />
               <span className="text-xs text-gray-400 truncate">
                 {listing.seller?.displayName || 'Campus Seller'}
               </span>
-            </div>
-          ) : (
-            <div />
-          )}
+            </div> : <div />}
           <span className="text-xs text-gray-300 shrink-0 ml-1">
             {getRelativeTime(listing.bumpedAt || listing.createdAt)}
           </span>
         </div>
 
         {/* Dashboard Actions Row (Inside Card) */}
-        {actions && (
-          <div className="border-t border-gray-50 mt-2.5 pt-2.5 flex items-center gap-1.5">
+        {actions && <div className="border-t border-gray-50 mt-2.5 pt-2.5 flex items-center gap-1.5">
             {actions}
-          </div>
-        )}
+          </div>}
       </div>
-    </div>
-  )
+    </div>;
 }
