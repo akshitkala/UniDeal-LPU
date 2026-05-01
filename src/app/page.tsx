@@ -77,9 +77,7 @@ export default function Home() {
             <div className="flex flex-col items-start text-left max-w-2xl mx-auto lg:mx-0">
               
               <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium mb-6">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                University marketplace
-              </div>
+                <CheckCircle2 className="w-3.5 h-3.5" />University marketplace</div>
               
               <h1 className="text-3xl md:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight tracking-tight mb-6">
                 Buy and sell <br />
@@ -97,7 +95,7 @@ export default function Home() {
             {/* Right Column */}
             <div className="relative w-full aspect-square lg:aspect-video">
               <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-md border border-gray-100">
-                <Image src="/panelify-images/chatgpt-image-apr-23-2026-07_15_55-pm.jpg" alt="Students on campus" fill className="object-cover" priority />
+                <Image src="/panelify-images/hero.webp" alt="Students on campus" fill className="object-cover" priority />
               </div>
               {stats && <div className="absolute -bottom-4 -left-4 bg-white p-4 rounded-xl shadow-md border border-gray-100 flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white">
@@ -177,9 +175,7 @@ export default function Home() {
           </div>
 
           <div className="mt-12 text-center">
-            <p className="text-lg font-semibold text-gray-900">
-              UniDeal fixes all of this.
-            </p>
+            <p className="text-lg font-semibold text-gray-900">UniDeal fixes all of this.</p>
             <div className="w-12 h-1 bg-[#16a34a] rounded-full mx-auto mt-2" />
           </div>
         </div>
